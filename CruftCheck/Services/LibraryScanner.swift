@@ -90,9 +90,14 @@ enum LibraryScanner {
         for (index, orphan) in orphans.enumerated() {
             if isCancelled() { break }
 
-            let bytes = DirectorySizer.size(of: orphan.url, isCancelled: isCancelled)
+            let measured = DirectorySizer.measure(of: orphan.url, isCancelled: isCancelled)
             groups[orphan.bundleID, default: []].append(
-                OrphanPath(url: orphan.url, domain: orphan.domain, bytes: bytes)
+                OrphanPath(
+                    url: orphan.url,
+                    domain: orphan.domain,
+                    bytes: measured.bytes,
+                    lastModified: measured.lastModified
+                )
             )
             // The rule sees only the identifier, so every orphan sharing one carries
             // identical evidence — last write wins because they're all the same value.

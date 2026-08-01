@@ -62,6 +62,9 @@ struct OrphanPath: Identifiable, Hashable, Sendable {
     let url: URL
     let domain: LibraryDomain
     var bytes: UInt64
+    /// Newest modification anywhere under this path. Defaulted so callers that don't
+    /// measure recency — tests, previews — need not invent one.
+    var lastModified: Date?
 
     var id: URL { url }
 }
@@ -93,6 +96,30 @@ struct OrphanGroup: Identifiable, Hashable, Sendable {
     /// 700 KB plist never sits in the same visual rank as a 2.7 GB support folder.
     var isPreferencesOnly: Bool {
         !paths.isEmpty && paths.allSatisfy { $0.domain == .preferences }
+    }
+
+    /// The most recent change across every leftover this identifier owns.
+    var lastModified: Date? {
+        paths.compactMap(\.lastModified).max()
+    }
+
+    /// How long since anything here changed, phrased for a chip — or `nil` when the age
+    /// isn't worth showing.
+    ///
+    /// Two ways to get `nil`, and conflating them would be a lie. Nothing was readable, so
+    /// there is no age; or the age is short, in which case it is not evidence of anything —
+    /// an app uninstalled last week leaves recent files behind, and a chip reading
+    /// "Untouched 6 days" invites the user to weigh a number that means nothing.
+    var stalenessLabel: String? {
+        guard let lastModified else { return nil }
+
+        let calendar = Calendar.current
+        let months = calendar.dateComponents([.month], from: lastModified, to: .now).month ?? 0
+        guard months >= 3 else { return nil }
+
+        if months >= 24 { return "Untouched \(months / 12) years" }
+        if months >= 12 { return "Untouched over a year" }
+        return "Untouched \(months) months"
     }
 }
 

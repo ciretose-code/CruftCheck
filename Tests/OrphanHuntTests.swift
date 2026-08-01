@@ -265,6 +265,84 @@ struct OrphanHuntTests {
         }
     }
 
+    // MARK: - Staleness
+    //
+    // This label is shown next to the evidence chips, so a wrong or over-confident one
+    // reads as justification for deleting something. The absent cases matter most.
+
+    private func group(monthsAgo months: Int?) -> OrphanGroup {
+        let date = months.map { Calendar.current.date(byAdding: .month, value: -$0, to: .now)! }
+        return OrphanGroup(
+            bundleID: "com.dead.Ghost",
+            paths: [OrphanPath(
+                url: URL(fileURLWithPath: "/tmp/ghost"),
+                domain: .applicationSupport,
+                bytes: 1,
+                lastModified: date
+            )]
+        )
+    }
+
+    @Test("No readable date means no staleness claim")
+    func noDateMeansNoLabel() {
+        #expect(group(monthsAgo: nil).lastModified == nil)
+        #expect(group(monthsAgo: nil).stalenessLabel == nil)
+    }
+
+    /// An app uninstalled last week leaves recent files behind. Reporting "Untouched 1
+    /// month" there would be a number the user has to know to discount.
+    @Test("A recent date is not reported as staleness", arguments: [0, 1, 2])
+    func recentIsNotReported(months: Int) {
+        #expect(group(monthsAgo: months).stalenessLabel == nil)
+    }
+
+    @Test("Months are reported once they're worth reporting")
+    func reportsMonths() {
+        #expect(group(monthsAgo: 3).stalenessLabel == "Untouched 3 months")
+        #expect(group(monthsAgo: 11).stalenessLabel == "Untouched 11 months")
+    }
+
+    @Test("A year or more collapses to a coarser phrase")
+    func reportsYears() {
+        #expect(group(monthsAgo: 12).stalenessLabel == "Untouched over a year")
+        #expect(group(monthsAgo: 23).stalenessLabel == "Untouched over a year")
+        #expect(group(monthsAgo: 24).stalenessLabel == "Untouched 2 years")
+        #expect(group(monthsAgo: 40).stalenessLabel == "Untouched 3 years")
+    }
+
+    @Test("A group's date is the newest across all of its leftovers")
+    func groupTakesNewestDate() throws {
+        let old = Date(timeIntervalSinceNow: -400 * 86_400)
+        let recent = Date(timeIntervalSinceNow: -10 * 86_400)
+
+        let group = OrphanGroup(bundleID: "com.dead.Ghost", paths: [
+            OrphanPath(url: URL(fileURLWithPath: "/tmp/a"), domain: .caches, bytes: 1, lastModified: old),
+            OrphanPath(url: URL(fileURLWithPath: "/tmp/b"), domain: .preferences, bytes: 1, lastModified: recent),
+            OrphanPath(url: URL(fileURLWithPath: "/tmp/c"), domain: .containers, bytes: 1, lastModified: nil)
+        ])
+
+        #expect(group.lastModified == recent)
+        // One still-active leftover is enough to withdraw the claim entirely.
+        #expect(group.stalenessLabel == nil)
+    }
+
+    @Test("Scanning carries a date onto every orphan path")
+    func scanRecordsDates() throws {
+        try withLibraryFixture { fixture in
+            try fixture.makeBundleDirectory(.applicationSupport, "com.dead.Ghost")
+
+            let groups = LibraryScanner.group(
+                LibraryScanner.orphans(
+                    among: LibraryScanner.collectOrphanCandidates(in: fixture.library),
+                    presence: .fake(installed: [])
+                )
+            )
+
+            let group = try #require(groups.first)
+            #expect(group.paths.allSatisfy { $0.lastModified != nil })
+        }
+    }
+
     // MARK: - Grouping
 
     @Test("Leftovers across domains collapse into one group with a summed size")

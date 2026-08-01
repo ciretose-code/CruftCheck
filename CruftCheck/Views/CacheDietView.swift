@@ -28,6 +28,8 @@ struct CacheDietView: View {
 }
 
 private struct CacheRow: View {
+    static let barWidth: CGFloat = 120
+
     let entry: CacheEntry
     let share: Double
     let clear: () -> Void
@@ -40,24 +42,39 @@ private struct CacheRow: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 18)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(entry.name)
                     .font(.body.weight(.medium))
                     .lineLimit(1)
                     .truncationMode(.middle)
 
-                // A single hairline bar reads size at a glance without adding chrome.
-                GeometryReader { geometry in
-                    Capsule()
-                        .fill(.tint)
-                        .frame(width: max(2, geometry.size.width * share), height: 3)
-                }
-                .frame(height: 3)
+                // Caches and Logs both feed this list and can hold the same name.
+                Text(entry.domain.rawValue)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
+            // Flexible, so every column to the right lines up regardless of name length.
+            // Without this a long name pushes the byte counts out of alignment and the
+            // list stops being scannable, which is the only thing it's for.
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            // The proportion gets its own column rather than sitting under the name, where
+            // a bar wider than a short name just reads as an underline. The track makes it
+            // legible as a meter even when the fill is a sliver.
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(.quaternary)
+                    .frame(height: 3)
+                Capsule()
+                    .fill(.tint)
+                    .frame(width: max(2, Self.barWidth * share), height: 3)
+            }
+            .frame(width: Self.barWidth)
+            .accessibilityHidden(true)
 
             Text(ByteFormat.string(entry.bytes))
                 .font(.body.weight(.semibold).monospacedDigit())
-                .frame(minWidth: 78, alignment: .trailing)
+                .frame(minWidth: 84, alignment: .trailing)
 
             Button("Clear") { isConfirming = true }
                 .confirmationDialog(

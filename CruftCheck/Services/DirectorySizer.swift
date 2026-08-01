@@ -15,8 +15,21 @@ enum DirectorySizer {
         .isRegularFileKey,
         .totalFileAllocatedSizeKey,
         .fileAllocatedSizeKey,
-        .fileSizeKey
+        .fileSizeKey,
+        .contentModificationDateKey
     ]
+
+    /// What one walk of a tree learned about it.
+    struct Measurement: Sendable {
+        var bytes: UInt64 = 0
+        /// Newest content-modification date seen anywhere in the tree.
+        ///
+        /// The max across the whole walk rather than the root directory's own mtime: a
+        /// directory's mtime only moves when its immediate entries change, so it says
+        /// nothing about a file rewritten three levels down. `nil` when nothing was
+        /// readable, which is not the same as "old" and must not be rendered as such.
+        var lastModified: Date?
+    }
 
     /// Total bytes occupied by `url`, recursing through every subdirectory.
     ///
@@ -28,15 +41,31 @@ enum DirectorySizer {
     /// - Returns: Size in bytes. Never throws; unreadable subtrees are skipped and simply
     ///   contribute nothing to the total.
     static func size(of url: URL, isCancelled: () -> Bool = { false }) -> UInt64 {
+        measure(of: url, isCancelled: isCancelled).bytes
+    }
+
+    /// Size and recency in one pass.
+    ///
+    /// Recency rides along with the sizing walk because the enumerator is already visiting
+    /// and caching resource values for every file; asking for one more prefetched key costs
+    /// no additional `stat(2)`.
+    ///
+    /// Unlike the byte total, recency counts directories as well as regular files. A
+    /// directory's mtime moves when entries are added or removed, which is genuinely a sign
+    /// the tree is in use, and the failure direction is safe: something touching a dead
+    /// app's folder makes it look *newer*, which only suppresses the staleness hint.
+    static func measure(of url: URL, isCancelled: () -> Bool = { false }) -> Measurement {
         let fileManager = FileManager.default
 
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: url.path(percentEncoded: false), isDirectory: &isDirectory) else {
-            return 0
+            return Measurement()
         }
 
         // A bare file (a stray .plist in Preferences, say) needs no enumerator.
-        guard isDirectory.boolValue else { return bytes(at: url) }
+        guard isDirectory.boolValue else {
+            return Measurement(bytes: bytes(at: url), lastModified: modified(at: url))
+        }
 
         // NSDirectoryEnumerator does not descend into symlinked directories, so a symlink
         // pointing at /Applications can't inflate the total or send us in a loop.
@@ -48,19 +77,24 @@ enum DirectorySizer {
             options: [],
             errorHandler: { _, _ in true }
         ) else {
-            return 0
+            return Measurement()
         }
 
         var total: UInt64 = 0
+        var newest = modified(at: url)
         var visited = 0
 
         for case let fileURL as URL in enumerator {
             visited += 1
             if visited & 0x1FF == 0, isCancelled() { break }
             total &+= bytes(at: fileURL)
+
+            if let date = modified(at: fileURL), date > (newest ?? .distantPast) {
+                newest = date
+            }
         }
 
-        return total
+        return Measurement(bytes: total, lastModified: newest)
     }
 
     /// Sizes a batch of roots, reporting each completion so the UI can show real progress.
@@ -105,5 +139,10 @@ enum DirectorySizer {
             return UInt64(max(0, allocated))
         }
         return UInt64(max(0, values.fileSize ?? 0))
+    }
+
+    /// Content-modification date, served from the enumerator's prefetched cache.
+    private static func modified(at url: URL) -> Date? {
+        (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
     }
 }

@@ -160,7 +160,7 @@ private struct OrphanRow: View {
                     .frame(maxWidth: 180, alignment: .leading)
                     .frame(height: 3)
 
-                    EvidenceChips(evidence: group.evidence)
+                    EvidenceChips(evidence: group.evidence, staleness: group.stalenessLabel)
                 }
 
                 Spacer(minLength: 12)
@@ -212,34 +212,55 @@ private struct OrphanRow: View {
     }
 }
 
-/// The checks that failed to find an owner for this identifier.
+/// The checks that failed to find an owner for this identifier, plus how long it has sat
+/// untouched.
 ///
 /// Rendered as passed checks rather than warnings: each one is a reason the app was willing
 /// to flag the item, so the colour is reassurance, not alarm.
+///
+/// Staleness gets a clock rather than a dot because it comes from somewhere else entirely —
+/// the presence rule proves nothing owns the identifier, the filesystem says nothing has
+/// used it. Giving both the same mark would imply one source.
 private struct EvidenceChips: View {
     let evidence: OrphanEvidence
+    let staleness: String?
 
     var body: some View {
-        if !evidence.checks.isEmpty {
+        if !evidence.checks.isEmpty || staleness != nil {
             FlowLayout(spacing: 5, lineSpacing: 4) {
                 ForEach(evidence.checks, id: \.self) { check in
-                    HStack(spacing: 4) {
+                    Chip {
                         Circle()
                             .fill(.green)
                             .frame(width: 4, height: 4)
                         Text(check.label)
                     }
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .overlay(
-                        Capsule().strokeBorder(.quaternary, lineWidth: 1)
-                    )
-                    .fixedSize()
+                }
+
+                if let staleness {
+                    Chip {
+                        Image(systemName: "clock")
+                        Text(staleness)
+                    }
                 }
             }
             .padding(.top, 2)
         }
+    }
+}
+
+private struct Chip<Content: View>: View {
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        HStack(spacing: 4) { content }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .overlay(
+                Capsule().strokeBorder(.quaternary, lineWidth: 1)
+            )
+            .fixedSize()
     }
 }

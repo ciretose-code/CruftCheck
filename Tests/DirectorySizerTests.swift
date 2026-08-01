@@ -11,6 +11,61 @@ struct DirectorySizerTests {
         #expect(DirectorySizer.size(of: missing) == 0)
     }
 
+    // MARK: - Recency
+
+    /// The whole point of walking for the date rather than reading the root's own mtime:
+    /// a directory's timestamp doesn't move when a file deep inside it is rewritten.
+    @Test("Recency is the newest date in the tree, not the root's own")
+    func recencyFindsDeepestChange() throws {
+        try withLibraryFixture { fixture in
+            let root = fixture.library.directory(for: .caches).appending(path: "deep", directoryHint: .isDirectory)
+            let nested = root.appending(path: "a/b", directoryHint: .isDirectory)
+            try fixture.makeDirectory(at: nested)
+            try fixture.writeFile(at: nested.appending(path: "recent.bin"), bytes: 64)
+
+            let old = Date(timeIntervalSinceNow: -400 * 86_400)
+            try fixture.backdate(root, to: old)
+
+            // Now touch one buried file, leaving every directory backdated.
+            let recent = Date(timeIntervalSinceNow: -3 * 86_400)
+            try fixture.setModified(nested.appending(path: "recent.bin"), to: recent)
+
+            let measured = DirectorySizer.measure(of: root)
+            let found = try #require(measured.lastModified)
+
+            #expect(abs(found.timeIntervalSince(recent)) < 2)
+        }
+    }
+
+    @Test("A wholly untouched tree reports its old date")
+    func recencyOfUntouchedTree() throws {
+        try withLibraryFixture { fixture in
+            let directory = try fixture.makeBundleDirectory(.caches, "com.dead.Ghost")
+            let old = Date(timeIntervalSinceNow: -500 * 86_400)
+            try fixture.backdate(directory, to: old)
+
+            let measured = DirectorySizer.measure(of: directory)
+            let found = try #require(measured.lastModified)
+
+            #expect(abs(found.timeIntervalSince(old)) < 2)
+        }
+    }
+
+    @Test("A missing path has no date rather than a wrong one")
+    func recencyOfMissingPathIsNil() {
+        let missing = URL(fileURLWithPath: "/tmp/cruftcheck-does-not-exist-\(UUID().uuidString)")
+        #expect(DirectorySizer.measure(of: missing).lastModified == nil)
+    }
+
+    @Test("Size is unchanged by measuring recency alongside it")
+    func measureAgreesWithSize() throws {
+        try withLibraryFixture { fixture in
+            let directory = try fixture.makeBundleDirectory(.caches, "com.dead.Ghost", bytes: 5_000)
+
+            #expect(DirectorySizer.measure(of: directory).bytes == DirectorySizer.size(of: directory))
+        }
+    }
+
     @Test("An empty directory is zero")
     func emptyDirectoryIsZero() throws {
         try withLibraryFixture { fixture in

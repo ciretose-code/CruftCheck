@@ -64,6 +64,29 @@ struct LibraryFixture {
         try FileManager.default.createSymbolicLink(at: url, withDestinationURL: destination)
     }
 
+    func setModified(_ url: URL, to date: Date) throws {
+        try FileManager.default.setAttributes(
+            [.modificationDate: date],
+            ofItemAtPath: url.path(percentEncoded: false)
+        )
+    }
+
+    /// Backdates an entire tree, deepest entries first.
+    ///
+    /// Order matters: writing a child's timestamp bumps its parent directory's, so parents
+    /// have to be set last or they end up looking newer than everything inside them.
+    func backdate(_ url: URL, to date: Date) throws {
+        var items: [URL] = []
+        if let enumerator = FileManager.default.enumerator(at: url, includingPropertiesForKeys: nil) {
+            for case let child as URL in enumerator { items.append(child) }
+        }
+
+        for item in items.sorted(by: { $0.pathComponents.count > $1.pathComponents.count }) {
+            try setModified(item, to: date)
+        }
+        try setModified(url, to: date)
+    }
+
     // MARK: - Measuring
 
     /// Allocated size of specific files, computed independently of `DirectorySizer` so the
