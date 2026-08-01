@@ -1,0 +1,528 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		025FF0CBC59A04ACB832D067 /* ScanMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A5C8FBE1A5A1EC0706ECD85 /* ScanMode.swift */; };
+		10FF2BE808F9631B898E29D9 /* Background.swift in Sources */ = {isa = PBXBuildFile; fileRef = 855DB45A687158FF594FC5D5 /* Background.swift */; };
+		18A5E18ECD3D958695ED8AFD /* CancellationFlag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BC50AA007CDFF981801F91 /* CancellationFlag.swift */; };
+		18DE38FEA6A096C9B72C3A4B /* DirectorySizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50F971176F129A77FF5388E9 /* DirectorySizer.swift */; };
+		280A899CA1ED3153E9CD2AD8 /* CacheDietTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFF5992888F9C79453F301B3 /* CacheDietTests.swift */; };
+		338F5B9989216C2691575CC6 /* CruftCheckApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED06F72D29FA5C082F0ED2FE /* CruftCheckApp.swift */; };
+		36B2515AEDA8936FD62A8008 /* LibraryPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37BC5BEF2A028C5CFDF3886F /* LibraryPaths.swift */; };
+		44EF2F9AECF10155B5A2F64C /* InstalledAppIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E376F339A759A5F6136C051 /* InstalledAppIndex.swift */; };
+		4E4DDA88DF7A8B07F4289C33 /* AppPresence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 759483F3D51746C827E9E2E5 /* AppPresence.swift */; };
+		5E464577DFB6633F4538F7EA /* OrphanHuntTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6724ACB4C58951BF862DFB22 /* OrphanHuntTests.swift */; };
+		75B069C39B83A5B79FB00AB4 /* DirectorySizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 797CE0BA5B8897E3CA01B2CC /* DirectorySizerTests.swift */; };
+		9468538AC994C880F8FD0FA5 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA9CEFE093B2056C8642A46E /* ContentView.swift */; };
+		B7D3EEAED6919EDD7EA2837A /* ScanResults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CF7CC55EB8FF58EED351B89 /* ScanResults.swift */; };
+		C092A1F983F9A55C224DDCDF /* TrashService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C95EC99E8781A0E709EBE35 /* TrashService.swift */; };
+		C65CC9ED71856B11E5CD0EF8 /* ByteFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59AD1EC8AF16276810B7C31D /* ByteFormat.swift */; };
+		D294FD1D0C117828A60F8190 /* LibraryFixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B6492CF430D56D10FA703A /* LibraryFixture.swift */; };
+		D7456734EB68E558363C3D8D /* LibraryScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7837F7B26FC1433ECC4670EE /* LibraryScanner.swift */; };
+		D78AA0998DCA11E1D16AAD29 /* ScannerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7362B048CBB6D2ABF5AE0F1 /* ScannerViewModel.swift */; };
+		DAD8C477DCC08257ECDD565F /* AppBundleIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCE452DBE3F4607491FFB34F /* AppBundleIndex.swift */; };
+		DCAD8E9CCB0AB5A87D3CAAC2 /* CacheDietView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AE26888477B948E1E2E2E0D /* CacheDietView.swift */; };
+		E4A6B1B9E88FDB0033847E4D /* OrphanHuntView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C830DDA956C1442B96D66D6 /* OrphanHuntView.swift */; };
+		E5DC189BB68618879B54A2E6 /* TrashServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EF41CC9484765970693A0 /* TrashServiceTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		FB589364C837678D54BB851F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 766B42E333E41AF2B0CA8B66 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D07F165857211B96BEB395C7;
+			remoteInfo = CruftCheck;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		37BC5BEF2A028C5CFDF3886F /* LibraryPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryPaths.swift; sourceTree = "<group>"; };
+		4AE26888477B948E1E2E2E0D /* CacheDietView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheDietView.swift; sourceTree = "<group>"; };
+		50F971176F129A77FF5388E9 /* DirectorySizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectorySizer.swift; sourceTree = "<group>"; };
+		59AD1EC8AF16276810B7C31D /* ByteFormat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteFormat.swift; sourceTree = "<group>"; };
+		5A5C8FBE1A5A1EC0706ECD85 /* ScanMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanMode.swift; sourceTree = "<group>"; };
+		5C830DDA956C1442B96D66D6 /* OrphanHuntView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanHuntView.swift; sourceTree = "<group>"; };
+		5E376F339A759A5F6136C051 /* InstalledAppIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledAppIndex.swift; sourceTree = "<group>"; };
+		6724ACB4C58951BF862DFB22 /* OrphanHuntTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanHuntTests.swift; sourceTree = "<group>"; };
+		759483F3D51746C827E9E2E5 /* AppPresence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPresence.swift; sourceTree = "<group>"; };
+		7837F7B26FC1433ECC4670EE /* LibraryScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryScanner.swift; sourceTree = "<group>"; };
+		797CE0BA5B8897E3CA01B2CC /* DirectorySizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectorySizerTests.swift; sourceTree = "<group>"; };
+		7CF7CC55EB8FF58EED351B89 /* ScanResults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResults.swift; sourceTree = "<group>"; };
+		855DB45A687158FF594FC5D5 /* Background.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Background.swift; sourceTree = "<group>"; };
+		90F6C4E2E4B8ED76705D7321 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		97BC50AA007CDFF981801F91 /* CancellationFlag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancellationFlag.swift; sourceTree = "<group>"; };
+		9C95EC99E8781A0E709EBE35 /* TrashService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrashService.swift; sourceTree = "<group>"; };
+		AA9CEFE093B2056C8642A46E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		B68EF41CC9484765970693A0 /* TrashServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrashServiceTests.swift; sourceTree = "<group>"; };
+		B7362B048CBB6D2ABF5AE0F1 /* ScannerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewModel.swift; sourceTree = "<group>"; };
+		BA9EE5AAF353F902690C5E82 /* CruftCheck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CruftCheck.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DCE452DBE3F4607491FFB34F /* AppBundleIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBundleIndex.swift; sourceTree = "<group>"; };
+		E3B6492CF430D56D10FA703A /* LibraryFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryFixture.swift; sourceTree = "<group>"; };
+		ED06F72D29FA5C082F0ED2FE /* CruftCheckApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CruftCheckApp.swift; sourceTree = "<group>"; };
+		ED96A2011BCDB9409B9D1304 /* CruftCheckTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CruftCheckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		EFF5992888F9C79453F301B3 /* CacheDietTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheDietTests.swift; sourceTree = "<group>"; };
+		FF3DDED4DDCEAC7DF5A2C442 /* CruftCheck.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CruftCheck.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0439704A89DB134B170F7B41 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				59AD1EC8AF16276810B7C31D /* ByteFormat.swift */,
+				4AE26888477B948E1E2E2E0D /* CacheDietView.swift */,
+				AA9CEFE093B2056C8642A46E /* ContentView.swift */,
+				5C830DDA956C1442B96D66D6 /* OrphanHuntView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		14473C9DFE663161238D74F2 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BA9EE5AAF353F902690C5E82 /* CruftCheck.app */,
+				ED96A2011BCDB9409B9D1304 /* CruftCheckTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4A6992C3817E1F4A4AF16722 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				DCE452DBE3F4607491FFB34F /* AppBundleIndex.swift */,
+				759483F3D51746C827E9E2E5 /* AppPresence.swift */,
+				855DB45A687158FF594FC5D5 /* Background.swift */,
+				97BC50AA007CDFF981801F91 /* CancellationFlag.swift */,
+				50F971176F129A77FF5388E9 /* DirectorySizer.swift */,
+				5E376F339A759A5F6136C051 /* InstalledAppIndex.swift */,
+				37BC5BEF2A028C5CFDF3886F /* LibraryPaths.swift */,
+				7837F7B26FC1433ECC4670EE /* LibraryScanner.swift */,
+				9C95EC99E8781A0E709EBE35 /* TrashService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		882194D1A5DBD50B3B629350 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				EFF5992888F9C79453F301B3 /* CacheDietTests.swift */,
+				797CE0BA5B8897E3CA01B2CC /* DirectorySizerTests.swift */,
+				E3B6492CF430D56D10FA703A /* LibraryFixture.swift */,
+				6724ACB4C58951BF862DFB22 /* OrphanHuntTests.swift */,
+				B68EF41CC9484765970693A0 /* TrashServiceTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		A8F93199DBD59A38F9AD66A4 /* CruftCheck */ = {
+			isa = PBXGroup;
+			children = (
+				FF3DDED4DDCEAC7DF5A2C442 /* CruftCheck.entitlements */,
+				ED06F72D29FA5C082F0ED2FE /* CruftCheckApp.swift */,
+				90F6C4E2E4B8ED76705D7321 /* Info.plist */,
+				EFD7667D6144B2E9611E76C4 /* Models */,
+				4A6992C3817E1F4A4AF16722 /* Services */,
+				CF1CE65290D7A516181D4BE8 /* ViewModels */,
+				0439704A89DB134B170F7B41 /* Views */,
+			);
+			path = CruftCheck;
+			sourceTree = "<group>";
+		};
+		B0214E1E46D9E71AAED4FA04 = {
+			isa = PBXGroup;
+			children = (
+				A8F93199DBD59A38F9AD66A4 /* CruftCheck */,
+				882194D1A5DBD50B3B629350 /* Tests */,
+				14473C9DFE663161238D74F2 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CF1CE65290D7A516181D4BE8 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				B7362B048CBB6D2ABF5AE0F1 /* ScannerViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		EFD7667D6144B2E9611E76C4 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				5A5C8FBE1A5A1EC0706ECD85 /* ScanMode.swift */,
+				7CF7CC55EB8FF58EED351B89 /* ScanResults.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3088352D0EC1B4E861131BFE /* CruftCheckTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DA7B8E1BE8C859D8203B4C36 /* Build configuration list for PBXNativeTarget "CruftCheckTests" */;
+			buildPhases = (
+				A5D0B4DFC73904085E50D40F /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				94D722A983A6446B73689DFE /* PBXTargetDependency */,
+			);
+			name = CruftCheckTests;
+			packageProductDependencies = (
+			);
+			productName = CruftCheckTests;
+			productReference = ED96A2011BCDB9409B9D1304 /* CruftCheckTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		D07F165857211B96BEB395C7 /* CruftCheck */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 199F0F7F53670FF51F8B57AC /* Build configuration list for PBXNativeTarget "CruftCheck" */;
+			buildPhases = (
+				E3F96182BCB22C876593907B /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CruftCheck;
+			packageProductDependencies = (
+			);
+			productName = CruftCheck;
+			productReference = BA9EE5AAF353F902690C5E82 /* CruftCheck.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		766B42E333E41AF2B0CA8B66 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					3088352D0EC1B4E861131BFE = {
+						ProvisioningStyle = Manual;
+					};
+					D07F165857211B96BEB395C7 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Manual;
+					};
+				};
+			};
+			buildConfigurationList = 2990A09D52B604D72812FE10 /* Build configuration list for PBXProject "CruftCheck" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = B0214E1E46D9E71AAED4FA04;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 14473C9DFE663161238D74F2 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D07F165857211B96BEB395C7 /* CruftCheck */,
+				3088352D0EC1B4E861131BFE /* CruftCheckTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A5D0B4DFC73904085E50D40F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				280A899CA1ED3153E9CD2AD8 /* CacheDietTests.swift in Sources */,
+				75B069C39B83A5B79FB00AB4 /* DirectorySizerTests.swift in Sources */,
+				D294FD1D0C117828A60F8190 /* LibraryFixture.swift in Sources */,
+				5E464577DFB6633F4538F7EA /* OrphanHuntTests.swift in Sources */,
+				E5DC189BB68618879B54A2E6 /* TrashServiceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E3F96182BCB22C876593907B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DAD8C477DCC08257ECDD565F /* AppBundleIndex.swift in Sources */,
+				4E4DDA88DF7A8B07F4289C33 /* AppPresence.swift in Sources */,
+				10FF2BE808F9631B898E29D9 /* Background.swift in Sources */,
+				C65CC9ED71856B11E5CD0EF8 /* ByteFormat.swift in Sources */,
+				DCAD8E9CCB0AB5A87D3CAAC2 /* CacheDietView.swift in Sources */,
+				18A5E18ECD3D958695ED8AFD /* CancellationFlag.swift in Sources */,
+				9468538AC994C880F8FD0FA5 /* ContentView.swift in Sources */,
+				338F5B9989216C2691575CC6 /* CruftCheckApp.swift in Sources */,
+				18DE38FEA6A096C9B72C3A4B /* DirectorySizer.swift in Sources */,
+				44EF2F9AECF10155B5A2F64C /* InstalledAppIndex.swift in Sources */,
+				36B2515AEDA8936FD62A8008 /* LibraryPaths.swift in Sources */,
+				D7456734EB68E558363C3D8D /* LibraryScanner.swift in Sources */,
+				E4A6B1B9E88FDB0033847E4D /* OrphanHuntView.swift in Sources */,
+				025FF0CBC59A04ACB832D067 /* ScanMode.swift in Sources */,
+				B7D3EEAED6919EDD7EA2837A /* ScanResults.swift in Sources */,
+				D78AA0998DCA11E1D16AAD29 /* ScannerViewModel.swift in Sources */,
+				C092A1F983F9A55C224DDCDF /* TrashService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		94D722A983A6446B73689DFE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D07F165857211B96BEB395C7 /* CruftCheck */;
+			targetProxy = FB589364C837678D54BB851F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		3C585626DFD0446739040596 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.cruftcheck.CruftCheckTests;
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CruftCheck.app/Contents/MacOS/CruftCheck";
+			};
+			name = Release;
+		};
+		5AA1F0B94FDAE0462DAFCFB6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		7C6C1556E9D97D7A1BE3F436 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = CruftCheck/CruftCheck.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				INFOPLIST_FILE = CruftCheck/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cruftcheck.CruftCheck;
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		889868B6EFF1CFB61B73BB60 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		98EBD7265253253BDAB56830 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = CruftCheck/CruftCheck.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				INFOPLIST_FILE = CruftCheck/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cruftcheck.CruftCheck;
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		E3B239A662005C6F06728630 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.cruftcheck.CruftCheckTests;
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CruftCheck.app/Contents/MacOS/CruftCheck";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		199F0F7F53670FF51F8B57AC /* Build configuration list for PBXNativeTarget "CruftCheck" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				98EBD7265253253BDAB56830 /* Debug */,
+				7C6C1556E9D97D7A1BE3F436 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		2990A09D52B604D72812FE10 /* Build configuration list for PBXProject "CruftCheck" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				889868B6EFF1CFB61B73BB60 /* Debug */,
+				5AA1F0B94FDAE0462DAFCFB6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DA7B8E1BE8C859D8203B4C36 /* Build configuration list for PBXNativeTarget "CruftCheckTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E3B239A662005C6F06728630 /* Debug */,
+				3C585626DFD0446739040596 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 766B42E333E41AF2B0CA8B66 /* Project object */;
+}

@@ -1,0 +1,101 @@
+import Foundation
+import Testing
+@testable import CruftCheck
+
+@Suite("Cache Diet")
+struct CacheDietTests {
+
+    @Test("Caches and Logs are both scanned, largest first")
+    func sortsDescendingAcrossDomains() throws {
+        try withLibraryFixture { fixture in
+            try fixture.makeBundleDirectory(.caches, "Small", bytes: 1_024)
+            try fixture.makeBundleDirectory(.caches, "Huge", bytes: 400_000)
+            try fixture.makeBundleDirectory(.logs, "Medium", bytes: 60_000)
+
+            let scan = LibraryScanner.scanCaches(in: fixture.library)
+
+            #expect(scan.entries.map(\.name) == ["Huge", "Medium", "Small"])
+            #expect(scan.entries.map(\.domain) == [.caches, .logs, .caches])
+        }
+    }
+
+    /// Regression: measuring Apple's caches raises a TCC prompt ("would like to access
+    /// Apple Music…") for directories the app would never offer to delete. They must be
+    /// filtered out before sizing, not merely disabled in the UI.
+    @Test("System caches are skipped before they are ever opened", arguments: [
+        "com.apple.Music", "AMSDataMigratorTool", "PassKit", "GameKit", "GeoServices", "Animoji"
+    ])
+    func skipsSystemCaches(name: String) throws {
+        try withLibraryFixture { fixture in
+            try fixture.makeBundleDirectory(.caches, name, bytes: 100_000)
+            try fixture.makeBundleDirectory(.caches, "com.acme.Widget", bytes: 2_048)
+
+            let scan = LibraryScanner.scanCaches(in: fixture.library)
+
+            #expect(scan.entries.map(\.name) == ["com.acme.Widget"])
+            #expect(scan.skippedSystemItems == 1)
+        }
+    }
+
+    @Test("Skipped items are counted, not silently dropped")
+    func reportsSkippedCount() throws {
+        try withLibraryFixture { fixture in
+            for name in ["com.apple.Music", "com.apple.helpd", "PassKit"] {
+                try fixture.makeBundleDirectory(.caches, name)
+            }
+            try fixture.makeBundleDirectory(.caches, "Homebrew")
+
+            let scan = LibraryScanner.scanCaches(in: fixture.library)
+
+            #expect(scan.skippedSystemItems == 3)
+            #expect(scan.entries.count == 1)
+        }
+    }
+
+    @Test("Progress is reported once per measured item")
+    func reportsProgress() throws {
+        try withLibraryFixture { fixture in
+            for index in 0..<5 {
+                try fixture.makeBundleDirectory(.caches, "app\(index)")
+            }
+
+            var ticks: [ScanProgress] = []
+            _ = LibraryScanner.scanCaches(in: fixture.library, onProgress: { ticks.append($0) })
+
+            #expect(ticks.count == 5)
+            #expect(ticks.map(\.completed) == [1, 2, 3, 4, 5])
+            #expect(ticks.allSatisfy { $0.total == 5 })
+            #expect(ticks.last?.fraction == 1.0)
+        }
+    }
+
+    @Test("A cancelled scan returns without measuring")
+    func honoursCancellation() throws {
+        try withLibraryFixture { fixture in
+            for index in 0..<20 {
+                try fixture.makeBundleDirectory(.caches, "app\(index)", bytes: 50_000)
+            }
+
+            let scan = LibraryScanner.scanCaches(in: fixture.library, isCancelled: { true })
+
+            #expect(scan.entries.isEmpty)
+        }
+    }
+
+    /// The flag has to be readable from a plain dispatch queue, where `Task.isCancelled`
+    /// is always false — the bug this type exists to prevent.
+    @Test("CancellationFlag is visible across threads")
+    func cancellationFlagCrossesThreads() async {
+        let flag = CancellationFlag()
+        #expect(!flag.isCancelled)
+
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                flag.cancel()
+                continuation.resume()
+            }
+        }
+
+        #expect(flag.isCancelled)
+    }
+}

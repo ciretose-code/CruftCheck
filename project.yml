@@ -1,0 +1,77 @@
+name: CruftCheck
+options:
+  bundleIdPrefix: com.cruftcheck
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+targets:
+  CruftCheck:
+    type: application
+    platform: macOS
+    sources:
+      - path: CruftCheck
+    info:
+      path: CruftCheck/Info.plist
+      properties:
+        CFBundleName: Cruft/Check
+        CFBundleDisplayName: Cruft/Check
+        CFBundleShortVersionString: "0.1"
+        CFBundleVersion: "1"
+        LSApplicationCategoryType: public.app-category.utilities
+        LSMinimumSystemVersion: "14.0"
+        NSHumanReadableCopyright: ""
+        # Shown when macOS prompts for the Full Disk Access needed to read
+        # ~/Library/Containers and ~/Library/Application Support in full.
+        NSDesktopFolderUsageDescription: Cruft/Check never reads your Desktop.
+    entitlements:
+      path: CruftCheck/CruftCheck.entitlements
+      properties:
+        # The App Sandbox is OFF by design. A sandboxed app cannot enumerate
+        # ~/Library or call trashItem() on arbitrary paths there without the user
+        # hand-picking every folder in an NSOpenPanel, which defeats the tool.
+        # Distribution outside the Mac App Store is the intended path; grant the
+        # built app Full Disk Access in System Settings > Privacy & Security.
+        com.apple.security.app-sandbox: false
+        com.apple.security.files.user-selected.read-write: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.cruftcheck.CruftCheck
+        MARKETING_VERSION: "0.1"
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: ""
+        COMBINE_HIDPI_IMAGES: YES
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+
+  CruftCheckTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: CruftCheck
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.cruftcheck.CruftCheckTests
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+
+schemes:
+  CruftCheck:
+    build:
+      targets:
+        CruftCheck: all
+        CruftCheckTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - CruftCheckTests
