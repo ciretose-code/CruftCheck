@@ -112,3 +112,8 @@ Three constraints shape the concurrency design:
 The App Sandbox is **off** by design: a sandboxed app cannot enumerate `~/Library` or trash
 arbitrary paths there without the user hand-picking every folder in an open panel. Grant the
 built app Full Disk Access in System Settings › Privacy & Security to read every subpath.
+
+That grant is keyed to the bundle identifier *and* the code signature, so changing either
+invalidates it — the app keeps running but silently sees less of `~/Library`, and totals
+drop without an error. Re-grant Full Disk Access after any signing or identifier change, and
+remove the stale entry from the list while you're there.

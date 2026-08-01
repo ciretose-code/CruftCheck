@@ -1,6 +1,6 @@
 name: CruftCheck
 options:
-  bundleIdPrefix: com.cruftcheck
+  bundleIdPrefix: com.ciretose.mac.util
   deploymentTarget:
     macOS: "14.0"
   createIntermediateGroups: true
@@ -36,14 +36,16 @@ targets:
         com.apple.security.files.user-selected.read-write: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.cruftcheck.CruftCheck
+        PRODUCT_BUNDLE_IDENTIFIER: com.ciretose.mac.util.CruftCheck
         MARKETING_VERSION: "0.1"
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
         ENABLE_HARDENED_RUNTIME: YES
-        CODE_SIGN_IDENTITY: "-"
-        CODE_SIGN_STYLE: Manual
-        DEVELOPMENT_TEAM: ""
+        # Signed with the ciretose team. Distribution is outside the Mac App Store,
+        # so this is a development identity, not a Developer ID one.
+        CODE_SIGN_IDENTITY: "Apple Development"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 6D39SX3E6V
         COMBINE_HIDPI_IMAGES: YES
         ENABLE_USER_SCRIPT_SANDBOXING: NO
 
@@ -56,12 +58,16 @@ targets:
       - target: CruftCheck
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.cruftcheck.CruftCheckTests
+        # Distinct from the app's. Changing the identifier in Xcode's target editor with
+        # every target selected sets them all to the same value, which leaves the test
+        # bundle impersonating the app.
+        PRODUCT_BUNDLE_IDENTIFIER: com.ciretose.mac.util.CruftCheckTests
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
         GENERATE_INFOPLIST_FILE: YES
-        CODE_SIGN_IDENTITY: "-"
-        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Apple Development"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 6D39SX3E6V
 
 schemes:
   CruftCheck:
