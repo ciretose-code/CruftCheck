@@ -64,6 +64,13 @@ struct LibraryFixture {
         try FileManager.default.createSymbolicLink(at: url, withDestinationURL: destination)
     }
 
+    func setPosixPermissions(_ mode: Int, at url: URL) throws {
+        try FileManager.default.setAttributes(
+            [.posixPermissions: mode],
+            ofItemAtPath: url.path(percentEncoded: false)
+        )
+    }
+
     func setModified(_ url: URL, to date: Date) throws {
         try FileManager.default.setAttributes(
             [.modificationDate: date],

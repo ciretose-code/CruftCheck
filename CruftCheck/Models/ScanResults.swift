@@ -133,6 +133,65 @@ struct CacheEntry: Identifiable, Hashable, Sendable {
     var name: String { url.lastPathComponent }
 }
 
+/// Splits a size-sorted cache list into the rows a proportional bar can still speak about,
+/// and the tail it can't.
+///
+/// A bar scaled to the largest row is the only scaling that means exactly what it looks like
+/// — but on a real machine the largest row is orders of magnitude above the median, so every
+/// row past the first few computes to a fraction of a point and renders as the same minimum
+/// stub. A list of twenty-six becomes three distinguishable rows and twenty-three identical
+/// ones.
+///
+/// The alternative fixes — log or gamma scaling — buy visibility by making length stop
+/// meaning size, which is the one question this list exists to answer. So the scale stays
+/// honest and the tail stops being drawn a row at a time instead.
+struct CacheListSplit {
+    /// Rows large enough that their bar length still carries information.
+    var major: [CacheEntry] = []
+    /// Everything below the threshold, shown behind one expandable summary row.
+    var tail: [CacheEntry] = []
+
+    var tailBytes: UInt64 { tail.reduce(0) { $0 + $1.bytes } }
+
+    /// Share of the total below which a row joins the tail.
+    ///
+    /// A share of the *total*, not of the largest row, because "under 1% of what you could
+    /// reclaim" is a fact about the user's disk, while "under 1% of the biggest item" is a
+    /// fact about one unrelated row.
+    static let threshold = 0.01
+    /// Never collapse the list to nothing, however flat the distribution.
+    static let minimumMajorRows = 3
+    /// Hiding a single row behind a disclosure costs a click and saves nothing.
+    static let minimumTailRows = 2
+
+    /// - Parameter entries: Sorted descending by size, as `LibraryScanner` returns them.
+    ///   The prefix scan below depends on that order.
+    init(entries: [CacheEntry]) {
+        let total = entries.reduce(0) { $0 + $1.bytes }
+
+        // No total means no shares to compare against; show everything rather than invent
+        // a threshold.
+        guard total > 0 else {
+            major = entries
+            return
+        }
+
+        let cutoff = Double(total) * Self.threshold
+        var majorCount = entries.prefix { Double($0.bytes) >= cutoff }.count
+
+        // A flat distribution can put every row under the threshold — two hundred equal
+        // items are half a percent each — which would otherwise group the entire list.
+        majorCount = max(majorCount, min(Self.minimumMajorRows, entries.count))
+
+        if entries.count - majorCount < Self.minimumTailRows {
+            majorCount = entries.count
+        }
+
+        major = Array(entries.prefix(majorCount))
+        tail = Array(entries.dropFirst(majorCount))
+    }
+}
+
 /// Result of a Cache Diet scan.
 struct CacheScan: Sendable {
     var entries: [CacheEntry] = []

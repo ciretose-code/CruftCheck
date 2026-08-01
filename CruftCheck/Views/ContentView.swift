@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct ContentView: View {
@@ -6,6 +7,7 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
+            if scanner.diskAccess == .denied { AccessBanner(scanner: scanner) }
             Divider()
             content
             Divider()
@@ -13,18 +15,7 @@ struct ContentView: View {
         }
         .background(.background)
         .task { if scanner.phase == .idle { scanner.scan() } }
-        .alert(
-            "Some items couldn't be moved to the Trash",
-            isPresented: .init(
-                get: { scanner.errorMessage != nil },
-                set: { if !$0 { scanner.clearError() } }
-            ),
-            presenting: scanner.errorMessage
-        ) { _ in
-            Button("OK", role: .cancel) { scanner.clearError() }
-        } message: { message in
-            Text(message)
-        }
+        .modifier(TrashFailureAlert(scanner: scanner))
     }
 
     // MARK: - Header
@@ -101,6 +92,75 @@ struct ContentView: View {
             case .cacheDiet:  CacheDietView(scanner: scanner)
             }
         }
+    }
+}
+
+// MARK: - Failure alert
+
+/// Extracted from `ContentView.body` to keep that expression small enough to type-check
+/// quickly — inlined, it was already drawing a compiler warning about the cost.
+private struct TrashFailureAlert: ViewModifier {
+    @Bindable var scanner: ScannerViewModel
+
+    func body(content: Content) -> some View {
+        content.alert(
+            scanner.failure?.title ?? "",
+            isPresented: .init(
+                get: { scanner.failure != nil },
+                set: { if !$0 { scanner.clearError() } }
+            ),
+            presenting: scanner.failure
+        ) { failure in
+            if failure.needsFullDiskAccess {
+                Button("Open Settings") {
+                    NSWorkspace.shared.open(FullDiskAccess.settingsURL)
+                    scanner.clearError()
+                }
+                // Finder holds privileges this app doesn't, so this works even while the
+                // grant is missing — the only route that needs no relaunch.
+                Button("Reveal in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting(failure.blockedURLs)
+                    scanner.clearError()
+                }
+            }
+            Button("OK", role: .cancel) { scanner.clearError() }
+        } message: { failure in
+            Text(failure.message)
+        }
+    }
+}
+
+// MARK: - Access banner
+
+/// Shown from the moment a scan starts without the grant, not at the moment a deletion is
+/// refused. Told early it's a setup step; told late it's a wasted decision.
+private struct AccessBanner: View {
+    @Bindable var scanner: ScannerViewModel
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "lock.circle.fill")
+                .foregroundStyle(.orange)
+                .font(.title3)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Cruft/Check can't see all of ~/Library")
+                    .font(.callout.weight(.semibold))
+                Text("Totals are incomplete and items can't be moved to the Trash. Grant Full Disk Access, or use Reveal on any row and delete it from Finder.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 8)
+
+            Button("Open Settings") {
+                NSWorkspace.shared.open(FullDiskAccess.settingsURL)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+        .background(.orange.opacity(0.12))
     }
 }
 

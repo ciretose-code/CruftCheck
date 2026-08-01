@@ -19,6 +19,79 @@ struct CacheDietTests {
         }
     }
 
+    // MARK: - Splitting the tail off the list
+
+    private func entries(_ sizes: [UInt64]) -> [CacheEntry] {
+        sizes.enumerated().map { index, bytes in
+            CacheEntry(
+                url: URL(fileURLWithPath: "/tmp/cache-\(index)"),
+                domain: .caches,
+                bytes: bytes
+            )
+        }
+    }
+
+    /// The shape that motivated the split: two rows holding 94% of the total, and a tail
+    /// whose bars would every one of them draw at the minimum width.
+    @Test("A heavy tail is grouped away from the rows that hold the space")
+    func groupsHeavyTail() {
+        let split = CacheListSplit(entries: entries([
+            1_060_000_000, 1_060_000_000, 127_300_000,
+            4_800_000, 4_800_000, 520_000, 438_000, 385_000, 283_000
+        ]))
+
+        #expect(split.major.map(\.bytes) == [1_060_000_000, 1_060_000_000, 127_300_000])
+        #expect(split.tail.count == 6)
+        #expect(split.tailBytes == 11_226_000)
+    }
+
+    @Test("A tail too small to be worth a disclosure is left in place")
+    func doesNotGroupATinyTail() {
+        // Only the last row falls under 1%, and hiding one row behind a click saves nothing.
+        let split = CacheListSplit(entries: entries([500_000_000, 400_000_000, 100_000_000, 1_000]))
+
+        #expect(split.tail.isEmpty)
+        #expect(split.major.count == 4)
+    }
+
+    /// A flat distribution puts every row under the threshold — a hundred equal items are
+    /// 1% each — which must not collapse the entire list behind one disclosure.
+    @Test("A flat distribution still shows rows")
+    func keepsMinimumVisibleRows() {
+        let split = CacheListSplit(entries: entries(Array(repeating: 1_000, count: 200)))
+
+        #expect(split.major.count == CacheListSplit.minimumMajorRows)
+        #expect(split.tail.count == 200 - CacheListSplit.minimumMajorRows)
+    }
+
+    @Test("An empty list splits into nothing rather than trapping")
+    func handlesEmptyList() {
+        let split = CacheListSplit(entries: [])
+
+        #expect(split.major.isEmpty)
+        #expect(split.tail.isEmpty)
+        #expect(split.tailBytes == 0)
+    }
+
+    /// Everything measuring zero gives no total to take a share of. Show them rather than
+    /// divide by it.
+    @Test("A list totalling zero is left whole")
+    func handlesZeroTotal() {
+        let split = CacheListSplit(entries: entries([0, 0, 0, 0, 0]))
+
+        #expect(split.major.count == 5)
+        #expect(split.tail.isEmpty)
+    }
+
+    @Test("Splitting never loses or duplicates an entry")
+    func splitIsAPartition() {
+        let sizes: [UInt64] = [900_000_000, 90_000_000, 9_000_000, 900_000, 90_000, 9_000, 900]
+        let split = CacheListSplit(entries: entries(sizes))
+
+        #expect(split.major.count + split.tail.count == sizes.count)
+        #expect((split.major + split.tail).map(\.bytes) == sizes)
+    }
+
     // MARK: - Empty entries
     //
     // A row that can free nothing can't help the user choose, so it's kept out of the main

@@ -20,6 +20,7 @@
 		5E464577DFB6633F4538F7EA /* OrphanHuntTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6724ACB4C58951BF862DFB22 /* OrphanHuntTests.swift */; };
 		75B069C39B83A5B79FB00AB4 /* DirectorySizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 797CE0BA5B8897E3CA01B2CC /* DirectorySizerTests.swift */; };
 		9468538AC994C880F8FD0FA5 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA9CEFE093B2056C8642A46E /* ContentView.swift */; };
+		AD1692E96FBCFCC22F96CB94 /* FullDiskAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1036ABCF92E8B4B0AFDCAEC5 /* FullDiskAccess.swift */; };
 		B7D3EEAED6919EDD7EA2837A /* ScanResults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CF7CC55EB8FF58EED351B89 /* ScanResults.swift */; };
 		C092A1F983F9A55C224DDCDF /* TrashService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C95EC99E8781A0E709EBE35 /* TrashService.swift */; };
 		C65CC9ED71856B11E5CD0EF8 /* ByteFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59AD1EC8AF16276810B7C31D /* ByteFormat.swift */; };
@@ -43,6 +44,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1036ABCF92E8B4B0AFDCAEC5 /* FullDiskAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullDiskAccess.swift; sourceTree = "<group>"; };
 		2398413143EF8A2DB72FC81C /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		37BC5BEF2A028C5CFDF3886F /* LibraryPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryPaths.swift; sourceTree = "<group>"; };
 		4AE26888477B948E1E2E2E0D /* CacheDietView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheDietView.swift; sourceTree = "<group>"; };
@@ -102,6 +104,7 @@
 				855DB45A687158FF594FC5D5 /* Background.swift */,
 				97BC50AA007CDFF981801F91 /* CancellationFlag.swift */,
 				50F971176F129A77FF5388E9 /* DirectorySizer.swift */,
+				1036ABCF92E8B4B0AFDCAEC5 /* FullDiskAccess.swift */,
 				5E376F339A759A5F6136C051 /* InstalledAppIndex.swift */,
 				37BC5BEF2A028C5CFDF3886F /* LibraryPaths.swift */,
 				7837F7B26FC1433ECC4670EE /* LibraryScanner.swift */,
@@ -266,6 +269,7 @@
 				338F5B9989216C2691575CC6 /* CruftCheckApp.swift in Sources */,
 				18DE38FEA6A096C9B72C3A4B /* DirectorySizer.swift in Sources */,
 				5806F2E12A862DD4584E75BC /* FlowLayout.swift in Sources */,
+				AD1692E96FBCFCC22F96CB94 /* FullDiskAccess.swift in Sources */,
 				44EF2F9AECF10155B5A2F64C /* InstalledAppIndex.swift in Sources */,
 				36B2515AEDA8936FD62A8008 /* LibraryPaths.swift in Sources */,
 				D7456734EB68E558363C3D8D /* LibraryScanner.swift in Sources */,

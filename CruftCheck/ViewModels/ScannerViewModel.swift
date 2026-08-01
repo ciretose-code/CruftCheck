@@ -33,8 +33,26 @@ final class ScannerViewModel {
     private(set) var skippedSystemItems = 0
     private(set) var phase: Phase = .idle
     private(set) var progress: ScanProgress?
-    private(set) var errorMessage: String?
+    private(set) var failure: TrashFailure?
     private(set) var reclaimedBytes: UInt64 = 0
+    /// Checked at the start of every scan. `.denied` means results are incomplete and
+    /// nothing can be trashed, which the user needs to know before choosing anything.
+    private(set) var diskAccess: FullDiskAccess.Status = .unknown
+
+    /// What to tell the user when items couldn't be moved, and what to offer them about it.
+    struct TrashFailure {
+        var message: String
+        /// Drives the offer of System Settings, and of Finder as the way through meanwhile.
+        var needsFullDiskAccess: Bool
+        /// The items macOS refused, for revealing in Finder.
+        var blockedURLs: [URL] = []
+
+        var title: String {
+            needsFullDiskAccess
+                ? "Cruft/Check needs Full Disk Access"
+                : "Some items couldn't be moved to the Trash"
+        }
+    }
 
     /// Bundle identifiers the user has ticked in the Orphan Hunt.
     var selection: Set<OrphanGroup.ID> = []
@@ -82,11 +100,15 @@ final class ScannerViewModel {
 
         phase = .scanning
         progress = nil
-        errorMessage = nil
+        failure = nil
         selection.removeAll()
 
         let mode = mode
         scanTask = Task { [weak self] in
+            // Before the walk, not after it fails: one directory listing, and it decides
+            // whether anything the scan finds can actually be acted on.
+            self?.diskAccess = await Background.run { FullDiskAccess.status() }
+
             switch mode {
             case .orphanHunt: await self?.runOrphanHunt()
             case .cacheDiet:  await self?.runCacheDiet()
@@ -220,11 +242,39 @@ final class ScannerViewModel {
         report(outcome)
     }
 
-    func clearError() { errorMessage = nil }
+    func clearError() { failure = nil }
 
     private func report(_ outcome: TrashService.Outcome) {
-        errorMessage = outcome.didFullySucceed
-            ? nil
-            : outcome.failures.map { "\($0.url.lastPathComponent): \($0.message)" }.joined(separator: "\n")
+        guard !outcome.didFullySucceed else {
+            failure = nil
+            return
+        }
+
+        // A refused write is a fact about this Mac's settings, not about the items, so it
+        // gets its own explanation and its own way out rather than a list of file names
+        // each repeating the same underlying cause.
+        if outcome.needsFullDiskAccess {
+            diskAccess = .denied
+            let count = outcome.blockedURLs.count
+            failure = TrashFailure(
+                message: """
+                    macOS blocked \(count) item\(count == 1 ? "" : "s"). Cruft/Check can find \
+                    these but can't remove them without Full Disk Access.
+
+                    Grant it in System Settings and run the scan again — or reveal them in \
+                    Finder and move them to the Trash yourself, which works right now.
+                    """,
+                needsFullDiskAccess: true,
+                blockedURLs: outcome.blockedURLs
+            )
+            return
+        }
+
+        failure = TrashFailure(
+            message: outcome.failures
+                .map { "\($0.url.lastPathComponent): \($0.message)" }
+                .joined(separator: "\n"),
+            needsFullDiskAccess: false
+        )
     }
 }

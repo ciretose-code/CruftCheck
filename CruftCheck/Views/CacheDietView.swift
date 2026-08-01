@@ -5,20 +5,53 @@ import SwiftUI
 ///
 /// No selection model here — each row clears independently, because clearing one app's
 /// cache is a small, reversible, per-app decision rather than a batch operation.
+///
+/// Rows below `CacheListSplit.threshold` are collapsed behind one summary row. Their bars
+/// would all render at the same minimum width, so drawing them individually spends most of
+/// the list on rows that can't be told apart.
 struct CacheDietView: View {
     @Bindable var scanner: ScannerViewModel
 
+    /// Owned here rather than inside the summary row, because the rows it reveals are
+    /// siblings in the `List` rather than children of that row — see `TailSummary`.
+    @State private var isTailExpanded = false
+
     var body: some View {
         List {
-            ForEach(scanner.caches) { entry in
+            ForEach(split.major) { entry in
                 CacheRow(entry: entry, share: share(of: entry)) {
                     Task { await scanner.clearCache(entry) }
+                }
+            }
+
+            if !split.tail.isEmpty {
+                TailSummary(
+                    count: split.tail.count,
+                    bytes: split.tailBytes,
+                    isExpanded: $isTailExpanded
+                )
+
+                if isTailExpanded {
+                    // Emitted flat into the List, not nested under the summary row. A
+                    // `ForEach` inside a row's own stack lays out as one row and renders
+                    // its children blank.
+                    //
+                    // No bars in here either: every one would draw at the minimum width,
+                    // which is why these were grouped in the first place.
+                    ForEach(split.tail) { entry in
+                        CacheRow(entry: entry, share: nil) {
+                            Task { await scanner.clearCache(entry) }
+                        }
+                        .padding(.leading, 18)
+                    }
                 }
             }
         }
         .listStyle(.inset)
         .alternatingRowBackgrounds()
     }
+
+    private var split: CacheListSplit { CacheListSplit(entries: scanner.caches) }
 
     /// Each row's size relative to the largest row, for the proportion bar.
     private func share(of entry: CacheEntry) -> Double {
@@ -27,11 +60,64 @@ struct CacheDietView: View {
     }
 }
 
+// MARK: - Tail
+
+/// The one row standing in for the collapsed remainder of the list.
+///
+/// Expandable rather than hidden: those rows are still reachable and still individually
+/// clearable, they just stop competing for attention with the entries holding real space.
+private struct TailSummary: View {
+    let count: Int
+    let bytes: UInt64
+    @Binding var isExpanded: Bool
+
+    var body: some View {
+        Button {
+            withAnimation(.snappy(duration: 0.15)) { isExpanded.toggle() }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "chevron.right")
+                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(count) smaller items")
+                        .font(.body.weight(.medium))
+                    Text("None above 1% of the total")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                // Empty, but the column stays so the sizes still line up with the rows above.
+                Color.clear.frame(width: CacheRow.barWidth, height: 3)
+
+                Text(ByteFormat.string(bytes))
+                    .font(.body.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .frame(minWidth: 84, alignment: .trailing)
+
+                // Reserves the width of a row's Clear button so the columns don't shift.
+                Button("Clear") {}.hidden()
+            }
+            .padding(.vertical, 5)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(count) smaller items, \(ByteFormat.string(bytes)) combined")
+        .accessibilityHint(isExpanded ? "Collapse" : "Expand to clear them individually")
+    }
+}
+
+// MARK: - Row
+
 private struct CacheRow: View {
     static let barWidth: CGFloat = 120
 
     let entry: CacheEntry
-    let share: Double
+    /// `nil` inside the tail group, where a bar would carry no information.
+    let share: Double?
     let clear: () -> Void
 
     @State private var isConfirming = false
@@ -61,16 +147,20 @@ private struct CacheRow: View {
             // The proportion gets its own column rather than sitting under the name, where
             // a bar wider than a short name just reads as an underline. The track makes it
             // legible as a meter even when the fill is a sliver.
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(.quaternary)
-                    .frame(height: 3)
-                Capsule()
-                    .fill(.tint)
-                    .frame(width: max(2, Self.barWidth * share), height: 3)
+            if let share {
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(.quaternary)
+                        .frame(height: 3)
+                    Capsule()
+                        .fill(.tint)
+                        .frame(width: max(2, Self.barWidth * share), height: 3)
+                }
+                .frame(width: Self.barWidth)
+                .accessibilityHidden(true)
+            } else {
+                Color.clear.frame(width: Self.barWidth, height: 3)
             }
-            .frame(width: Self.barWidth)
-            .accessibilityHidden(true)
 
             Text(ByteFormat.string(entry.bytes))
                 .font(.body.weight(.semibold).monospacedDigit())
