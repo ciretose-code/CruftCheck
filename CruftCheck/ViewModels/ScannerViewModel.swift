@@ -26,6 +26,9 @@ final class ScannerViewModel {
 
     private(set) var orphans: [OrphanGroup] = []
     private(set) var caches: [CacheEntry] = []
+    /// Caches that measured zero bytes. Kept out of `caches` so they don't take list space
+    /// they can't earn, but retained so `tidyEmptyCaches` has something to act on.
+    private(set) var emptyCaches: [CacheEntry] = []
     /// System caches the scanner refused to measure — see `LibraryScanner.scanCaches`.
     private(set) var skippedSystemItems = 0
     private(set) var phase: Phase = .idle
@@ -135,6 +138,7 @@ final class ScannerViewModel {
         guard !flag.isCancelled else { return finishCancelled(flag) }
 
         caches = result.entries
+        emptyCaches = result.emptyEntries
         skippedSystemItems = result.skippedSystemItems
         progress = nil
         phase = .done
@@ -189,8 +193,30 @@ final class ScannerViewModel {
 
         if outcome.trashed.contains(entry.url) {
             caches.removeAll { $0.id == entry.id }
+            emptyCaches.removeAll { $0.id == entry.id }
             reclaimedBytes &+= outcome.reclaimedBytes
         }
+        report(outcome)
+    }
+
+    /// Moves the zero-byte cache folders to the Trash.
+    ///
+    /// This reclaims nothing and is not pretending to. It exists because those folders are
+    /// clutter, and the honest framing is tidying rather than freeing space — `reclaimedBytes`
+    /// is driven by `expectedBytes`, which is zero for every one of these, so the figure the
+    /// footer reports cannot be inflated by running it.
+    ///
+    /// An app you still use is free to recreate its cache folder on next launch. That's the
+    /// expected outcome, not a failure.
+    func tidyEmptyCaches() async {
+        let entries = emptyCaches
+        guard !entries.isEmpty else { return }
+
+        let urls = entries.map(\.url)
+        let outcome = await Background.run { TrashService.trash(urls) }
+
+        let trashed = Set(outcome.trashed)
+        emptyCaches.removeAll { trashed.contains($0.url) }
         report(outcome)
     }
 

@@ -75,10 +75,15 @@ struct ContentView: View {
                 : base + " · \(scanner.selection.count) selected, \(ByteFormat.string(scanner.selectedBytes))"
         case .cacheDiet:
             let count = scanner.caches.count
-            let base = "reclaimable in \(count) item\(count == 1 ? "" : "s")"
-            return scanner.skippedSystemItems > 0
-                ? base + " · \(scanner.skippedSystemItems) system items not measured"
-                : base
+            var parts = ["reclaimable in \(count) item\(count == 1 ? "" : "s")"]
+            if scanner.skippedSystemItems > 0 {
+                parts.append("\(scanner.skippedSystemItems) system items not measured")
+            }
+            // Named so the list doesn't look arbitrarily short next to Finder's own count.
+            if !scanner.emptyCaches.isEmpty {
+                parts.append("\(scanner.emptyCaches.count) empty")
+            }
+            return parts.joined(separator: " · ")
         }
     }
 
@@ -104,6 +109,7 @@ struct ContentView: View {
 private struct FooterBar: View {
     @Bindable var scanner: ScannerViewModel
     @State private var isConfirmingTrash = false
+    @State private var isConfirmingTidy = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -129,6 +135,25 @@ private struct FooterBar: View {
                     .foregroundStyle(.secondary)
             }
 
+            // Deliberately an ordinary button, not the prominent one: this frees no space,
+            // so it must not look like the reason you opened the app.
+            if scanner.mode == .cacheDiet && !scanner.emptyCaches.isEmpty {
+                Button(tidyTitle) { isConfirmingTidy = true }
+                    .disabled(scanner.isScanning)
+                    .confirmationDialog(
+                        tidyTitle + "?",
+                        isPresented: $isConfirmingTidy,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Move to Trash") {
+                            Task { await scanner.tidyEmptyCaches() }
+                        }
+                        Button("Cancel", role: .cancel) {}
+                    } message: {
+                        Text("These hold no files, so this frees no space — it only clears them out of ~/Library. Apps you still use may create them again, and you can restore them from the Trash.")
+                    }
+            }
+
             if scanner.mode == .orphanHunt {
                 Button("Move to Trash", role: .destructive) { isConfirmingTrash = true }
                     .buttonStyle(.borderedProminent)
@@ -150,6 +175,11 @@ private struct FooterBar: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
         .background(.thinMaterial)
+    }
+
+    private var tidyTitle: String {
+        let count = scanner.emptyCaches.count
+        return "Tidy \(count) Empty Folder\(count == 1 ? "" : "s")"
     }
 
     private var progressText: String {

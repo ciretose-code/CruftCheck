@@ -136,6 +136,15 @@ struct CacheEntry: Identifiable, Hashable, Sendable {
 /// Result of a Cache Diet scan.
 struct CacheScan: Sendable {
     var entries: [CacheEntry] = []
+    /// Entries that measured zero bytes, kept out of the main list.
+    ///
+    /// A row that can free nothing can't help you choose, and it costs the same space on
+    /// screen as one that can. They're kept rather than discarded so the count stays
+    /// honest and the tidy action has something to act on.
+    ///
+    /// "Zero bytes" means no regular file data — `DirectorySizer` counts only regular
+    /// files, so one of these may still contain empty subdirectories.
+    var emptyEntries: [CacheEntry] = []
     /// System caches deliberately not measured. Surfaced as a count so the user knows the
     /// list is filtered rather than wondering why ~/Library/Caches looks bigger in Finder.
     var skippedSystemItems: Int = 0

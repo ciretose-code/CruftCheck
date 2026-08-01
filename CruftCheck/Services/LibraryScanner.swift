@@ -151,13 +151,18 @@ enum LibraryScanner {
         }
 
         var entries: [CacheEntry] = []
+        var empties: [CacheEntry] = []
         entries.reserveCapacity(targets.count)
 
         for (index, target) in targets.enumerated() {
             if isCancelled() { break }
 
             let bytes = DirectorySizer.size(of: target.url, isCancelled: isCancelled)
-            entries.append(CacheEntry(url: target.url, domain: target.domain, bytes: bytes))
+            let entry = CacheEntry(url: target.url, domain: target.domain, bytes: bytes)
+
+            // Partitioned here rather than filtered in the view, so the count the UI shows
+            // and the list it shows can't drift apart.
+            if bytes > 0 { entries.append(entry) } else { empties.append(entry) }
 
             onProgress(ScanProgress(
                 completed: index + 1,
@@ -168,6 +173,10 @@ enum LibraryScanner {
 
         return CacheScan(
             entries: entries.sorted { $0.bytes > $1.bytes },
+            // Nothing to rank these by, so name order is the only stable choice.
+            emptyEntries: empties.sorted {
+                $0.name.localizedStandardCompare($1.name) == .orderedAscending
+            },
             skippedSystemItems: skipped
         )
     }

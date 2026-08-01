@@ -19,6 +19,66 @@ struct CacheDietTests {
         }
     }
 
+    // MARK: - Empty entries
+    //
+    // A row that can free nothing can't help the user choose, so it's kept out of the main
+    // list — but it is kept, because the count has to stay honest and the tidy action needs
+    // something to act on.
+
+    @Test("Zero-byte entries are partitioned out of the main list")
+    func partitionsEmptyEntries() throws {
+        try withLibraryFixture { fixture in
+            try fixture.makeBundleDirectory(.caches, "HasData", bytes: 4_096)
+            try fixture.makeBundleDirectory(.caches, "Hollow", bytes: 0)
+            try fixture.makeBundleDirectory(.logs, "AlsoHollow", bytes: 0)
+
+            let scan = LibraryScanner.scanCaches(in: fixture.library)
+
+            #expect(scan.entries.map(\.name) == ["HasData"])
+            #expect(scan.emptyEntries.map(\.name) == ["AlsoHollow", "Hollow"])
+        }
+    }
+
+    @Test("An empty entry is never counted as a skipped system item")
+    func emptyIsNotSkipped() throws {
+        try withLibraryFixture { fixture in
+            try fixture.makeBundleDirectory(.caches, "Hollow", bytes: 0)
+
+            let scan = LibraryScanner.scanCaches(in: fixture.library)
+
+            #expect(scan.emptyEntries.count == 1)
+            #expect(scan.skippedSystemItems == 0)
+        }
+    }
+
+    /// A directory holding only empty subdirectories measures zero — `DirectorySizer`
+    /// counts regular files only — so it belongs with the empties, not the main list.
+    @Test("A directory of empty subdirectories counts as empty")
+    func nestedEmptyDirectoriesAreEmpty() throws {
+        try withLibraryFixture { fixture in
+            let root = fixture.library.directory(for: .caches).appending(path: "Shell", directoryHint: .isDirectory)
+            try fixture.makeDirectory(at: root.appending(path: "a/b", directoryHint: .isDirectory))
+
+            let scan = LibraryScanner.scanCaches(in: fixture.library)
+
+            #expect(scan.entries.isEmpty)
+            #expect(scan.emptyEntries.map(\.name) == ["Shell"])
+        }
+    }
+
+    @Test("System caches are never offered for tidying either")
+    func emptySystemCachesStayHidden() throws {
+        try withLibraryFixture { fixture in
+            try fixture.makeBundleDirectory(.caches, "GameKit", bytes: 0)
+
+            let scan = LibraryScanner.scanCaches(in: fixture.library)
+
+            #expect(scan.entries.isEmpty)
+            #expect(scan.emptyEntries.isEmpty, "a protected name must not reach the tidy list")
+            #expect(scan.skippedSystemItems == 1)
+        }
+    }
+
     /// Regression: measuring Apple's caches raises a TCC prompt ("would like to access
     /// Apple Music…") for directories the app would never offer to delete. They must be
     /// filtered out before sizing, not merely disabled in the UI.

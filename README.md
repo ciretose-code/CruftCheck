@@ -34,7 +34,7 @@ edit the `info:` and `entitlements:` blocks in `project.yml`, not those files.
 xcodebuild -project CruftCheck.xcodeproj -scheme CruftCheck -destination 'platform=macOS' test
 ```
 
-51 tests run against a synthetic `~/Library` built in a temp directory (`Tests/LibraryFixture.swift`),
+55 tests run against a synthetic `~/Library` built in a temp directory (`Tests/LibraryFixture.swift`),
 so the safety-critical paths are exercised without waiting for real cruft to accumulate.
 One test in `TrashServiceTests` genuinely moves a uniquely-named file to the Trash — that
 recoverability is the whole safety guarantee — and removes that exact item afterward.
@@ -56,6 +56,13 @@ The app is deliberately biased toward doing nothing:
   displays them. Caution the user can't see is caution they have to take on faith. The
   clause order short-circuits exactly as before, so recording evidence can never change a
   verdict — `isInstalled` is now a wrapper over `verdict(for:)`.
+- **An action that frees nothing never looks like one that does.** Zero-byte caches are
+  partitioned out of the Cache Diet list — a row that can't free anything can't help you
+  choose — and counted in the header instead. They can be trashed via "Tidy N Empty
+  Folders", an ordinary button rather than the prominent one, whose confirmation says
+  plainly that it frees no space and that apps you still use may recreate the folders.
+  `reclaimedBytes` comes from `expectedBytes`, which is zero for all of them, so running it
+  cannot inflate the figure the footer reports.
 - **Recency is reported only when it means something.** `DirectorySizer.measure` takes the
   newest modification date across a whole tree (a directory's own mtime doesn't move when a
   file three levels down is rewritten), and `stalenessLabel` withholds the claim entirely
