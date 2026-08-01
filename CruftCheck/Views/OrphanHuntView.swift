@@ -6,13 +6,27 @@ import SwiftUI
 /// Selection is explicit checkboxes rather than List row selection: this list drives a
 /// destructive action, and a click that both highlights and arms deletion is too easy to
 /// trigger by accident.
+///
+/// Rows carry the evidence behind each verdict — the checks in `OrphanEvidence` that
+/// declined to claim the identifier. The app's caution is the reason to trust it, so it
+/// belongs on screen rather than only in the README.
 struct OrphanHuntView: View {
     @Bindable var scanner: ScannerViewModel
 
     var body: some View {
         List {
-            ForEach(scanner.orphans) { group in
-                OrphanRow(group: group, isOn: binding(for: group))
+            ForEach(sections) { section in
+                Section {
+                    ForEach(section.groups) { group in
+                        OrphanRow(
+                            group: group,
+                            share: share(of: group),
+                            isOn: binding(for: group)
+                        )
+                    }
+                } header: {
+                    SectionHeader(section: section)
+                }
             }
         }
         .listStyle(.inset)
@@ -24,7 +38,7 @@ struct OrphanHuntView: View {
                 }
                 .buttonStyle(.link)
                 Spacer()
-                Text("Verified against Launch Services — nothing here resolves to an installed app.")
+                Text("Every row lists the checks that found no installed owner.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -32,6 +46,32 @@ struct OrphanHuntView: View {
             .padding(.vertical, 6)
             .background(.bar)
         }
+    }
+
+    // MARK: - Sectioning
+
+    /// Groups bucketed by where their bytes actually live, largest bucket first, with
+    /// preferences-only leftovers pushed to the end regardless of count.
+    private var sections: [OrphanSection] {
+        let preferencesOnly = scanner.orphans.filter(\.isPreferencesOnly)
+        let substantial = scanner.orphans.filter { !$0.isPreferencesOnly }
+
+        var sections = Dictionary(grouping: substantial, by: \.primaryDomain)
+            .map { OrphanSection(domain: $0.key, isPreferencesOnly: false, groups: $0.value) }
+            .sorted { $0.bytes > $1.bytes }
+
+        if !preferencesOnly.isEmpty {
+            sections.append(
+                OrphanSection(domain: .preferences, isPreferencesOnly: true, groups: preferencesOnly)
+            )
+        }
+        return sections
+    }
+
+    /// Each row's size relative to the largest orphan, for the proportion bar.
+    private func share(of group: OrphanGroup) -> Double {
+        guard let largest = scanner.orphans.first?.bytes, largest > 0 else { return 0 }
+        return Double(group.bytes) / Double(largest)
     }
 
     private var allSelected: Bool {
@@ -49,8 +89,42 @@ struct OrphanHuntView: View {
     }
 }
 
+// MARK: - Sections
+
+private struct OrphanSection: Identifiable {
+    let domain: LibraryDomain
+    let isPreferencesOnly: Bool
+    let groups: [OrphanGroup]
+
+    var id: String { isPreferencesOnly ? "preferences-only" : domain.rawValue }
+    var bytes: UInt64 { groups.reduce(0) { $0 + $1.bytes } }
+    var title: String { isPreferencesOnly ? "Preferences only" : domain.rawValue }
+}
+
+private struct SectionHeader: View {
+    let section: OrphanSection
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: section.domain.symbol)
+                .foregroundStyle(.secondary)
+            Text(section.title)
+            Text("·")
+                .foregroundStyle(.tertiary)
+            Text(ByteFormat.string(section.bytes))
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+        }
+        .font(.caption.weight(.semibold))
+        .textCase(nil)
+    }
+}
+
+// MARK: - Rows
+
 private struct OrphanRow: View {
     let group: OrphanGroup
+    let share: Double
     @Binding var isOn: Bool
     @State private var isExpanded = false
 
@@ -61,12 +135,32 @@ private struct OrphanRow: View {
                     .labelsHidden()
                     .toggleStyle(.checkbox)
 
-                VStack(alignment: .leading, spacing: 2) {
+                Image(systemName: group.primaryDomain.symbol)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18)
+
+                VStack(alignment: .leading, spacing: 3) {
                     Text(group.displayName)
                         .font(.body.weight(.medium))
-                    Text(group.bundleID)
+
+                    Text("\(group.bundleID) · \(group.paths.count) location\(group.paths.count == 1 ? "" : "s")")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+
+                    // A hairline bar ranks rows by size without adding a second number.
+                    // Width-capped: stretched across the full text column it stops reading
+                    // as a meter and starts reading as an underline.
+                    GeometryReader { geometry in
+                        Capsule()
+                            .fill(.tint)
+                            .frame(width: max(2, geometry.size.width * share), height: 3)
+                    }
+                    .frame(maxWidth: 180, alignment: .leading)
+                    .frame(height: 3)
+
+                    EvidenceChips(evidence: group.evidence)
                 }
 
                 Spacer(minLength: 12)
@@ -109,11 +203,43 @@ private struct OrphanRow: View {
                         .font(.caption)
                     }
                 }
-                .padding(.leading, 32)
+                .padding(.leading, 50)
                 .padding(.bottom, 2)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 5)
         .contentShape(Rectangle())
+    }
+}
+
+/// The checks that failed to find an owner for this identifier.
+///
+/// Rendered as passed checks rather than warnings: each one is a reason the app was willing
+/// to flag the item, so the colour is reassurance, not alarm.
+private struct EvidenceChips: View {
+    let evidence: OrphanEvidence
+
+    var body: some View {
+        if !evidence.checks.isEmpty {
+            FlowLayout(spacing: 5, lineSpacing: 4) {
+                ForEach(evidence.checks, id: \.self) { check in
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(.green)
+                            .frame(width: 4, height: 4)
+                        Text(check.label)
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .overlay(
+                        Capsule().strokeBorder(.quaternary, lineWidth: 1)
+                    )
+                    .fixedSize()
+                }
+            }
+            .padding(.top, 2)
+        }
     }
 }

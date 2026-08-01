@@ -30,6 +30,9 @@ struct ContentView: View {
     // MARK: - Header
 
     /// A segmented Picker is the whole navigation model — two modes, one control, no chrome.
+    ///
+    /// Below it sits the answer to the question the app was opened with. Once a scan has
+    /// results the total leads; before that, the mode's own description does.
     private var header: some View {
         VStack(spacing: 10) {
             Picker("Mode", selection: $scanner.mode) {
@@ -41,13 +44,42 @@ struct ContentView: View {
             .labelsHidden()
             .controlSize(.large)
 
-            Text(scanner.mode.subtitle)
-                .font(.callout)
-                .foregroundStyle(.secondary)
+            if scanner.hasResults && !scanner.isScanning {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(ByteFormat.string(scanner.totalBytes))
+                        .font(.title.weight(.semibold).monospacedDigit())
+                    Text(headline)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
                 .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                Text(scanner.mode.subtitle)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
+    }
+
+    /// The context line beside the total — what the number is made of.
+    private var headline: String {
+        switch scanner.mode {
+        case .orphanHunt:
+            let count = scanner.orphans.count
+            let base = "in \(count) orphaned identifier\(count == 1 ? "" : "s")"
+            return scanner.selection.isEmpty
+                ? base
+                : base + " · \(scanner.selection.count) selected, \(ByteFormat.string(scanner.selectedBytes))"
+        case .cacheDiet:
+            let count = scanner.caches.count
+            let base = "reclaimable in \(count) item\(count == 1 ? "" : "s")"
+            return scanner.skippedSystemItems > 0
+                ? base + " · \(scanner.skippedSystemItems) system items not measured"
+                : base
+        }
     }
 
     // MARK: - Content
@@ -85,9 +117,7 @@ private struct FooterBar: View {
                 Button("Stop") { scanner.cancelScan() }
                     .buttonStyle(.link)
             } else {
-                Text(summaryText)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                // The totals live in the header now; the footer is controls and outcomes.
                 Button("Rescan") { scanner.scan() }
             }
 
@@ -127,23 +157,6 @@ private struct FooterBar: View {
         return "Measuring \(progress.completed) of \(progress.total) — \(progress.label)"
     }
 
-    private var summaryText: String {
-        switch scanner.mode {
-        case .orphanHunt:
-            let selected = scanner.selection.count
-            if selected > 0 {
-                return "\(selected) selected — \(ByteFormat.string(scanner.selectedBytes))"
-            }
-            let found = scanner.orphans.count
-            return "\(found) \(found == 1 ? "orphan" : "orphans") — \(ByteFormat.string(scanner.totalBytes))"
-        case .cacheDiet:
-            let count = scanner.caches.count
-            let base = "\(count) \(count == 1 ? "item" : "items") — \(ByteFormat.string(scanner.totalBytes)) reclaimable"
-            return scanner.skippedSystemItems > 0
-                ? base + " · \(scanner.skippedSystemItems) system items skipped"
-                : base
-        }
-    }
 }
 
 // MARK: - Transient states

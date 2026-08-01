@@ -15,19 +15,42 @@ struct AppPresence {
     /// Vendor prefixes ("com.google", "fr.handbrake") of every app bundle on disk.
     var vendorPrefixes: Set<String>
 
-    func isInstalled(_ bundleID: String) -> Bool {
-        if resolve(bundleID) { return true }
+    /// What the rule concluded, and — when it concluded "orphaned" — on what basis.
+    enum Verdict: Hashable, Sendable {
+        case installed
+        case orphaned(OrphanEvidence)
+    }
+
+    /// The rule. Every `return .installed` below is a reason **not** to flag something;
+    /// reaching the end means all of them declined, and the accumulated checks are the
+    /// record of that.
+    ///
+    /// Clause order and short-circuiting are load-bearing and identical to the `Bool`
+    /// version this replaced: a later clause never runs once an earlier one has spared the
+    /// identifier, so recording evidence cannot change a verdict.
+    func verdict(for bundleID: String) -> Verdict {
+        if resolve(bundleID) { return .installed }
+
+        var checks: [OrphanEvidence.Check] = [.noLaunchServicesMatch]
 
         // "com.acme.Widget.Helper" is not an orphan if "com.acme.Widget" is installed.
-        if LibraryPaths.ancestorIdentifiers(of: bundleID).contains(where: resolve) { return true }
+        let ancestors = LibraryPaths.ancestorIdentifiers(of: bundleID)
+        if ancestors.contains(where: resolve) { return .installed }
+        if !ancestors.isEmpty { checks.append(.noInstalledAncestor(checked: ancestors)) }
 
         // Helpers and XPC services that share a vendor with an installed app —
         // "fr.handbrake.HandBrakeXPCService" while HandBrake.app is present. Their own
         // identifiers never resolve, because they aren't apps.
-        if let vendor = AppBundleIndex.vendorPrefix(of: bundleID), vendorPrefixes.contains(vendor) {
-            return true
+        if let vendor = AppBundleIndex.vendorPrefix(of: bundleID) {
+            if vendorPrefixes.contains(vendor) { return .installed }
+            checks.append(.noInstalledVendor(prefix: vendor))
         }
 
+        return .orphaned(OrphanEvidence(checks: checks))
+    }
+
+    func isInstalled(_ bundleID: String) -> Bool {
+        if case .installed = verdict(for: bundleID) { return true }
         return false
     }
 

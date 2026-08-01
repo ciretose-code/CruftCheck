@@ -19,6 +19,44 @@ enum LibraryDomain: String, Sendable, CaseIterable {
     }
 }
 
+/// Why an identifier was judged to belong to software that is no longer installed.
+///
+/// `AppPresence` runs a fixed sequence of "spare it" checks and an identifier is only an
+/// orphan when every one of them declines to claim it. Recording *which* checks ran turns
+/// the rule's answer from a bare `false` into something the UI can show: the app's caution
+/// is its most defensible property, and until now none of it was visible on screen.
+struct OrphanEvidence: Hashable, Sendable {
+
+    /// One check that ran and found nothing.
+    ///
+    /// Only checks that were *meaningful* for the identifier appear. A three-component
+    /// identifier has no ancestors to test, and a single-component name has no vendor
+    /// prefix, so neither produces a finding rather than producing a vacuous one.
+    enum Check: Hashable, Sendable {
+        /// Neither LaunchServices nor the running-application list knows this identifier.
+        case noLaunchServicesMatch
+        /// The shorter parent identifiers don't resolve either — it isn't a helper.
+        case noInstalledAncestor(checked: [String])
+        /// No `.app` bundle on disk ships under this vendor prefix — it isn't an XPC service.
+        case noInstalledVendor(prefix: String)
+
+        var label: String {
+            switch self {
+            case .noLaunchServicesMatch:
+                "No Launch Services match"
+            case .noInstalledAncestor(let checked):
+                checked.count == 1
+                    ? "Parent \(checked[0]) not installed"
+                    : "No installed parent identifier"
+            case .noInstalledVendor(let prefix):
+                "No installed \(prefix) bundle"
+            }
+        }
+    }
+
+    var checks: [Check] = []
+}
+
 /// A single on-disk item that belongs to an orphaned bundle identifier.
 struct OrphanPath: Identifiable, Hashable, Sendable {
     let url: URL
@@ -33,6 +71,9 @@ struct OrphanPath: Identifiable, Hashable, Sendable {
 struct OrphanGroup: Identifiable, Hashable, Sendable {
     let bundleID: String
     var paths: [OrphanPath]
+    /// The checks that failed to claim this identifier. Defaulted so previews and tests can
+    /// build a group without restating the rule's output.
+    var evidence: OrphanEvidence = OrphanEvidence()
 
     var id: String { bundleID }
     var bytes: UInt64 { paths.reduce(0) { $0 + $1.bytes } }
@@ -41,6 +82,18 @@ struct OrphanGroup: Identifiable, Hashable, Sendable {
     /// Best-effort human name: the last component of the reverse-DNS identifier,
     /// which is nearly always the product name ("com.acme.WidgetPro" -> "WidgetPro").
     var displayName: String { bundleID.components(separatedBy: ".").last ?? bundleID }
+
+    /// The domain holding most of this group's bytes. Sections the list by where the space
+    /// actually is, rather than by whichever domain happened to be enumerated first.
+    var primaryDomain: LibraryDomain {
+        paths.max { $0.bytes < $1.bytes }?.domain ?? .applicationSupport
+    }
+
+    /// Every leftover is a preference file — kilobytes, not gigabytes. Worth separating so a
+    /// 700 KB plist never sits in the same visual rank as a 2.7 GB support folder.
+    var isPreferencesOnly: Bool {
+        !paths.isEmpty && paths.allSatisfy { $0.domain == .preferences }
+    }
 }
 
 /// One top-level directory inside ~/Library/Caches or ~/Library/Logs.

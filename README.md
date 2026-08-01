@@ -34,7 +34,7 @@ edit the `info:` and `entitlements:` blocks in `project.yml`, not those files.
 xcodebuild -project CruftCheck.xcodeproj -scheme CruftCheck -destination 'platform=macOS' test
 ```
 
-35 tests run against a synthetic `~/Library` built in a temp directory (`Tests/LibraryFixture.swift`),
+41 tests run against a synthetic `~/Library` built in a temp directory (`Tests/LibraryFixture.swift`),
 so the safety-critical paths are exercised without waiting for real cruft to accumulate.
 One test in `TrashServiceTests` genuinely moves a uniquely-named file to the Trash — that
 recoverability is the whole safety guarantee — and removes that exact item afterward.
@@ -51,6 +51,11 @@ The app is deliberately biased toward doing nothing:
   resolves in LaunchServices, if any ancestor identifier resolves (helpers), or if it shares
   a vendor prefix with an installed app bundle (XPC services such as
   `fr.handbrake.HandBrakeXPCService`, whose own identifier never resolves).
+- **The verdict shows its work.** `AppPresence.verdict(for:)` returns the checks that
+  declined to claim an identifier, not a bare `Bool`, and every row in the Orphan Hunt
+  displays them. Caution the user can't see is caution they have to take on faith. The
+  clause order short-circuits exactly as before, so recording evidence can never change a
+  verdict — `isInstalled` is now a wrapper over `verdict(for:)`.
 - **System paths are excluded before they are opened**, not merely disabled in the UI.
   Apple's caches don't all carry a `com.apple.` prefix — `AMSDataMigratorTool`, `PassKit`,
   `GameKit`, `GeoServices` are bare names, and several are TCC-guarded, so merely *measuring*
@@ -64,19 +69,19 @@ will need extending as other machines turn up new system directories.
 ```
 CruftCheck/
 ├─ CruftCheckApp.swift            @main, Window scene
-├─ Models/                        ScanMode, OrphanGroup, CacheEntry, ScanProgress
+├─ Models/                        ScanMode, OrphanGroup, OrphanEvidence, CacheEntry, ScanProgress
 ├─ Services/
 │   ├─ Background.swift           the one place the app leaves the main actor
 │   ├─ DirectorySizer.swift       enumerator-based sizing, allocated size, cancellable
 │   ├─ LibraryScanner.swift       both scans; pure functions over a LibraryRoot
 │   ├─ LibraryPaths.swift         safety lists + bundle-ID extraction  ← safety-critical
-│   ├─ AppPresence.swift          the "is it still installed?" rule, injectable
+│   ├─ AppPresence.swift          the "is it still installed?" rule + its evidence, injectable
 │   ├─ InstalledAppIndex.swift    LaunchServices lookups (@MainActor)
 │   ├─ AppBundleIndex.swift       vendor prefixes of installed .app bundles
 │   ├─ CancellationFlag.swift
 │   └─ TrashService.swift         the only code that removes anything
 ├─ ViewModels/ScannerViewModel.swift   @MainActor @Observable
-└─ Views/                         ContentView, OrphanHuntView, CacheDietView
+└─ Views/                         ContentView, OrphanHuntView, CacheDietView, FlowLayout
 ```
 
 Three constraints shape the concurrency design:

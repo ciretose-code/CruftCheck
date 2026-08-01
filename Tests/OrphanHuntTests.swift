@@ -174,6 +174,97 @@ struct OrphanHuntTests {
         }
     }
 
+    // MARK: - Evidence
+    //
+    // The evidence exists to be shown to the user as justification, so the thing worth
+    // testing is that it never claims a check that didn't run or couldn't apply.
+
+    @Test("A verdict of installed carries no evidence")
+    func installedHasNoEvidence() {
+        let presence = AppPresence.fake(installed: ["com.acme.Widget"])
+
+        #expect(presence.verdict(for: "com.acme.Widget") == .installed)
+    }
+
+    @Test("A plain orphan records only the Launch Services and vendor checks")
+    func evidenceForPlainOrphan() throws {
+        let presence = AppPresence.fake(installed: [], vendorPrefixes: ["com.google"])
+
+        guard case .orphaned(let evidence) = presence.verdict(for: "com.dead.Ghost") else {
+            Issue.record("expected com.dead.Ghost to be orphaned")
+            return
+        }
+
+        // Three components means no ancestors exist, so no ancestor check is claimed.
+        #expect(evidence.checks == [
+            .noLaunchServicesMatch,
+            .noInstalledVendor(prefix: "com.dead")
+        ])
+    }
+
+    @Test("A helper identifier records the ancestors that were tested")
+    func evidenceNamesTestedAncestors() throws {
+        let presence = AppPresence.fake(installed: [])
+
+        guard case .orphaned(let evidence) = presence.verdict(for: "com.dead.Ghost.Helper") else {
+            Issue.record("expected the helper to be orphaned")
+            return
+        }
+
+        #expect(evidence.checks == [
+            .noLaunchServicesMatch,
+            .noInstalledAncestor(checked: ["com.dead.Ghost"]),
+            .noInstalledVendor(prefix: "com.dead")
+        ])
+    }
+
+    /// The evidence must not outrun the rule: once a clause spares an identifier, no later
+    /// clause runs, so no later check may appear in a verdict.
+    @Test("Evidence is never recorded for a check the rule short-circuited past")
+    func evidenceStopsWhereTheRuleStops() {
+        // Vendor is installed, so the identifier is spared before any evidence is returned.
+        let spared = AppPresence.fake(installed: [], vendorPrefixes: ["fr.handbrake"])
+        #expect(spared.verdict(for: "fr.handbrake.HandBrakeXPCService") == .installed)
+
+        // Parent installed: spared at the ancestor clause, never reaching the vendor clause.
+        let viaParent = AppPresence.fake(installed: ["com.acme.Widget"])
+        #expect(viaParent.verdict(for: "com.acme.Widget.Helper") == .installed)
+    }
+
+    @Test("Grouping carries the evidence onto the group")
+    func groupCarriesEvidence() throws {
+        try withLibraryFixture { fixture in
+            try fixture.makeBundleDirectory(.applicationSupport, "com.dead.Ghost")
+            try fixture.makeBundleDirectory(.caches, "com.dead.Ghost")
+
+            let groups = LibraryScanner.group(
+                LibraryScanner.orphans(
+                    among: LibraryScanner.collectOrphanCandidates(in: fixture.library),
+                    presence: .fake(installed: [])
+                )
+            )
+
+            let group = try #require(groups.first)
+            #expect(group.paths.count == 2)
+            #expect(group.evidence.checks.contains(.noLaunchServicesMatch))
+            #expect(group.evidence.checks.contains(.noInstalledVendor(prefix: "com.dead")))
+        }
+    }
+
+    @Test("Every check produces a non-empty label")
+    func checksAreLabelled() {
+        let checks: [OrphanEvidence.Check] = [
+            .noLaunchServicesMatch,
+            .noInstalledAncestor(checked: ["com.acme.Widget"]),
+            .noInstalledAncestor(checked: ["com.acme.Widget.Sub", "com.acme.Widget"]),
+            .noInstalledVendor(prefix: "com.acme")
+        ]
+
+        for check in checks {
+            #expect(!check.label.isEmpty)
+        }
+    }
+
     // MARK: - Grouping
 
     @Test("Leftovers across domains collapse into one group with a summed size")

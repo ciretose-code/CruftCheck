@@ -21,6 +21,19 @@ enum LibraryScanner {
         let domain: LibraryDomain
     }
 
+    /// A candidate the presence rule declined to claim, carrying the checks that ran.
+    ///
+    /// Separate from `Candidate` rather than an optional field on it, because evidence
+    /// simply doesn't exist during phase 1 — the rule hasn't run yet.
+    struct Orphan: Sendable {
+        let candidate: Candidate
+        let evidence: OrphanEvidence
+
+        var bundleID: String { candidate.bundleID }
+        var url: URL { candidate.url }
+        var domain: LibraryDomain { candidate.domain }
+    }
+
     // MARK: - Mode 1: The Orphan Hunt
 
     /// Phase 1. Lists the top level of each orphan domain and keeps entries whose names
@@ -55,36 +68,51 @@ enum LibraryScanner {
     ///
     /// Pure, so the safety rule can be tested against a synthetic Library without needing
     /// particular apps installed on the machine running the tests.
-    static func orphans(among candidates: [Candidate], presence: AppPresence) -> [Candidate] {
-        candidates.filter { !presence.isInstalled($0.bundleID) }
+    static func orphans(among candidates: [Candidate], presence: AppPresence) -> [Orphan] {
+        candidates.compactMap { candidate in
+            guard case .orphaned(let evidence) = presence.verdict(for: candidate.bundleID) else {
+                return nil
+            }
+            return Orphan(candidate: candidate, evidence: evidence)
+        }
     }
 
     /// Phase 3. Sizes the confirmed orphans and groups them by bundle identifier, so one
     /// dead app with four leftover directories reads as a single row.
     static func group(
-        _ candidates: [Candidate],
+        _ orphans: [Orphan],
         isCancelled: () -> Bool = { false },
         onProgress: (ScanProgress) -> Void = { _ in }
     ) -> [OrphanGroup] {
         var groups: [String: [OrphanPath]] = [:]
+        var evidence: [String: OrphanEvidence] = [:]
 
-        for (index, candidate) in candidates.enumerated() {
+        for (index, orphan) in orphans.enumerated() {
             if isCancelled() { break }
 
-            let bytes = DirectorySizer.size(of: candidate.url, isCancelled: isCancelled)
-            groups[candidate.bundleID, default: []].append(
-                OrphanPath(url: candidate.url, domain: candidate.domain, bytes: bytes)
+            let bytes = DirectorySizer.size(of: orphan.url, isCancelled: isCancelled)
+            groups[orphan.bundleID, default: []].append(
+                OrphanPath(url: orphan.url, domain: orphan.domain, bytes: bytes)
             )
+            // The rule sees only the identifier, so every orphan sharing one carries
+            // identical evidence — last write wins because they're all the same value.
+            evidence[orphan.bundleID] = orphan.evidence
 
             onProgress(ScanProgress(
                 completed: index + 1,
-                total: candidates.count,
-                label: candidate.bundleID
+                total: orphans.count,
+                label: orphan.bundleID
             ))
         }
 
         return groups
-            .map { OrphanGroup(bundleID: $0.key, paths: $0.value.sorted { $0.bytes > $1.bytes }) }
+            .map {
+                OrphanGroup(
+                    bundleID: $0.key,
+                    paths: $0.value.sorted { $0.bytes > $1.bytes },
+                    evidence: evidence[$0.key] ?? OrphanEvidence()
+                )
+            }
             .sorted { $0.bytes > $1.bytes }
     }
 

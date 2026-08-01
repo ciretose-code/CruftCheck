@@ -16,6 +16,7 @@
 		36B2515AEDA8936FD62A8008 /* LibraryPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37BC5BEF2A028C5CFDF3886F /* LibraryPaths.swift */; };
 		44EF2F9AECF10155B5A2F64C /* InstalledAppIndex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E376F339A759A5F6136C051 /* InstalledAppIndex.swift */; };
 		4E4DDA88DF7A8B07F4289C33 /* AppPresence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 759483F3D51746C827E9E2E5 /* AppPresence.swift */; };
+		5806F2E12A862DD4584E75BC /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2398413143EF8A2DB72FC81C /* FlowLayout.swift */; };
 		5E464577DFB6633F4538F7EA /* OrphanHuntTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6724ACB4C58951BF862DFB22 /* OrphanHuntTests.swift */; };
 		75B069C39B83A5B79FB00AB4 /* DirectorySizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 797CE0BA5B8897E3CA01B2CC /* DirectorySizerTests.swift */; };
 		9468538AC994C880F8FD0FA5 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA9CEFE093B2056C8642A46E /* ContentView.swift */; };
@@ -42,6 +43,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2398413143EF8A2DB72FC81C /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		37BC5BEF2A028C5CFDF3886F /* LibraryPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryPaths.swift; sourceTree = "<group>"; };
 		4AE26888477B948E1E2E2E0D /* CacheDietView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheDietView.swift; sourceTree = "<group>"; };
 		50F971176F129A77FF5388E9 /* DirectorySizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectorySizer.swift; sourceTree = "<group>"; };
@@ -77,6 +79,7 @@
 				59AD1EC8AF16276810B7C31D /* ByteFormat.swift */,
 				4AE26888477B948E1E2E2E0D /* CacheDietView.swift */,
 				AA9CEFE093B2056C8642A46E /* ContentView.swift */,
+				2398413143EF8A2DB72FC81C /* FlowLayout.swift */,
 				5C830DDA956C1442B96D66D6 /* OrphanHuntView.swift */,
 			);
 			path = Views;
@@ -261,6 +264,7 @@
 				9468538AC994C880F8FD0FA5 /* ContentView.swift in Sources */,
 				338F5B9989216C2691575CC6 /* CruftCheckApp.swift in Sources */,
 				18DE38FEA6A096C9B72C3A4B /* DirectorySizer.swift in Sources */,
+				5806F2E12A862DD4584E75BC /* FlowLayout.swift in Sources */,
 				44EF2F9AECF10155B5A2F64C /* InstalledAppIndex.swift in Sources */,
 				36B2515AEDA8936FD62A8008 /* LibraryPaths.swift in Sources */,
 				D7456734EB68E558363C3D8D /* LibraryScanner.swift in Sources */,
