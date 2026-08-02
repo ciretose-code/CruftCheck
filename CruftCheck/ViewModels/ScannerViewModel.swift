@@ -237,9 +237,12 @@ final class ScannerViewModel {
 
         let outcome = await Background.run { TrashService.trash(urls, expectedBytes: sizes) }
 
-        let trashed = Set(outcome.trashed)
-        orphans.removeAll { group in group.urls.allSatisfy(trashed.contains) }
-        selection.removeAll()
+        orphans = orphans.removingTrashedPaths(Set(outcome.trashed))
+
+        // Keep the groups that failed selected, so retrying after granting access is one
+        // click rather than a re-selection. Groups that went entirely are no longer in
+        // `orphans`, so intersecting drops them.
+        selection.formIntersection(Set(orphans.map(\.id)))
         reclaimedBytes &+= outcome.reclaimedBytes
         report(outcome)
     }
@@ -289,20 +292,40 @@ final class ScannerViewModel {
         // A refused write is a fact about this Mac's settings, not about the items, so it
         // gets its own explanation and its own way out rather than a list of file names
         // each repeating the same underlying cause.
-        if outcome.needsFullDiskAccess {
-            diskAccess = .denied
+        if !outcome.blockedURLs.isEmpty {
             let count = outcome.blockedURLs.count
-            failure = TrashFailure(
-                message: """
-                    macOS blocked \(count) item\(count == 1 ? "" : "s"). Cruft/Check can find \
-                    these but can't remove them without Full Disk Access.
+            let items = "\(count) item\(count == 1 ? "" : "s")"
 
-                    Grant it in System Settings and run the scan again — or reveal them in \
-                    Finder and move them to the Trash yourself, which works right now.
-                    """,
-                needsFullDiskAccess: true,
-                blockedURLs: outcome.blockedURLs
-            )
+            // Blaming the grant is only right when the grant is missing. With Full Disk
+            // Access already granted, sending the user to System Settings to switch on
+            // something already on is exactly the wrong remediation — the cause is
+            // something else, most often a locked item or one held open by a running app.
+            if diskAccess == .granted {
+                failure = TrashFailure(
+                    message: """
+                        macOS refused to move \(items). Full Disk Access is already granted, \
+                        so something else is holding them — they may be locked, or in use by \
+                        a running app.
+
+                        Reveal them in Finder and move them to the Trash there.
+                        """,
+                    needsFullDiskAccess: false,
+                    blockedURLs: outcome.blockedURLs
+                )
+            } else {
+                diskAccess = .denied
+                failure = TrashFailure(
+                    message: """
+                        macOS blocked \(items). Cruft/Check can find these but can't remove \
+                        them without Full Disk Access.
+
+                        Grant it in System Settings and run the scan again — or reveal them \
+                        in Finder and move them to the Trash yourself, which works right now.
+                        """,
+                    needsFullDiskAccess: true,
+                    blockedURLs: outcome.blockedURLs
+                )
+            }
             return
         }
 

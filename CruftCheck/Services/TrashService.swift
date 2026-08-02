@@ -17,9 +17,14 @@ enum TrashService {
     /// route out of it.
     struct Failure: Sendable {
         enum Reason: Equatable, Sendable {
-            /// macOS refused. On this app's paths that means Full Disk Access, essentially
-            /// always — `~/Library/Containers` is unwritable without it.
+            /// macOS refused the write. Usually Full Disk Access — but not always, which is
+            /// why this records *what happened* rather than *what to do about it*. Whether
+            /// the grant is the cause depends on whether the grant is present, and only the
+            /// caller knows that.
             case permissionDenied
+            /// The volume itself is read-only. No permission grant changes this, and Finder
+            /// can't do it either.
+            case readOnlyVolume
             /// Refused by `LibraryPaths` before macOS was ever asked.
             case protectedItem
             case other(String)
@@ -30,7 +35,8 @@ enum TrashService {
 
         var message: String {
             switch reason {
-            case .permissionDenied: "Needs Full Disk Access."
+            case .permissionDenied: "macOS refused to remove this."
+            case .readOnlyVolume:   "The volume is read-only."
             case .protectedItem:    "Protected system item — skipped."
             case .other(let text):  text
             }
@@ -44,13 +50,13 @@ enum TrashService {
 
         var didFullySucceed: Bool { failures.isEmpty }
 
-        /// Whether the run was blocked by the grant rather than by anything about the items.
-        var needsFullDiskAccess: Bool {
-            failures.contains { $0.reason == .permissionDenied }
-        }
-
-        /// The items macOS refused — offered to Finder, which has privileges this app
-        /// doesn't, so the user has a way through that doesn't depend on the grant.
+        /// Items macOS refused on permission grounds. Offered to Finder, which holds
+        /// privileges this app doesn't, so there's a route through that doesn't depend on
+        /// any grant.
+        ///
+        /// Read-only volumes are excluded: Finder can't write there either, so pointing the
+        /// user at it would waste their time. Protected items are excluded because the
+        /// refusal is this app's own and no external tool is being suggested.
         var blockedURLs: [URL] {
             failures.filter { $0.reason == .permissionDenied }.map(\.url)
         }
@@ -84,7 +90,7 @@ enum TrashService {
                 outcome.trashed.append(url)
                 outcome.reclaimedBytes &+= expectedBytes[url] ?? 0
             } catch {
-                outcome.failures.append(Failure(url: url, reason: reason(for: error)))
+                outcome.failures.append(Failure(url: url, reason: classify(error)))
             }
         }
 
@@ -95,19 +101,28 @@ enum TrashService {
     ///
     /// Checks the Cocoa code and the underlying POSIX errno, because the same denial
     /// surfaces either way depending on where in the stack it was refused.
-    private static func reason(for error: Error) -> Failure.Reason {
+    ///
+    /// Not private so the tests can drive it with constructed errors. Provoking a genuine
+    /// read-only-volume failure would mean mounting one.
+    static func classify(_ error: Error) -> Failure.Reason {
         let nsError = error as NSError
+        let posix = posixCode(in: nsError)
 
-        let cocoaPermissionCodes = [
-            NSFileWriteNoPermissionError,
-            NSFileReadNoPermissionError,
-            NSFileWriteVolumeReadOnlyError
-        ]
+        // Checked before the permission codes, not after. A read-only volume is a denial
+        // too, and folding it in with the rest would have the app recommend a permission
+        // grant for something no grant can fix.
+        if nsError.domain == NSCocoaErrorDomain, nsError.code == NSFileWriteVolumeReadOnlyError {
+            return .readOnlyVolume
+        }
+        if posix == EROFS {
+            return .readOnlyVolume
+        }
+
+        let cocoaPermissionCodes = [NSFileWriteNoPermissionError, NSFileReadNoPermissionError]
         if nsError.domain == NSCocoaErrorDomain, cocoaPermissionCodes.contains(nsError.code) {
             return .permissionDenied
         }
-
-        if let posix = posixCode(in: nsError), posix == EPERM || posix == EACCES {
+        if posix == EPERM || posix == EACCES {
             return .permissionDenied
         }
 

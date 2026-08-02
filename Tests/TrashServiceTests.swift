@@ -74,7 +74,8 @@ struct TrashServiceTests {
             let outcome = TrashService.trash([passKit])
 
             #expect(outcome.failures.first?.reason == .protectedItem)
-            #expect(!outcome.needsFullDiskAccess, "no setting will ever make this succeed")
+            // Not offered to Finder: the refusal is this app's own safety list, and no
+            // external tool is being suggested.
             #expect(outcome.blockedURLs.isEmpty)
         }
     }
@@ -95,10 +96,37 @@ struct TrashServiceTests {
 
             #expect(outcome.trashed.isEmpty)
             #expect(outcome.failures.first?.reason == .permissionDenied)
-            #expect(outcome.needsFullDiskAccess)
             #expect(outcome.blockedURLs == [victim])
-            #expect(outcome.failures.first?.message.contains("Full Disk Access") == true)
+            // The per-item message records what happened, not what to do about it. Whether
+            // the grant is the cause depends on whether the grant is present, and only the
+            // view model knows that.
+            #expect(outcome.failures.first?.message == "macOS refused to remove this.")
         }
+    }
+
+    /// A read-only volume denies the write exactly as a missing grant does, and no
+    /// permission setting will ever change it. Collapsing the two made the app recommend
+    /// Full Disk Access for something Full Disk Access cannot fix.
+    @Test("A read-only volume is not a permissions problem")
+    func readOnlyVolumeIsItsOwnReason() {
+        let readOnly = NSError(domain: NSCocoaErrorDomain, code: NSFileWriteVolumeReadOnlyError)
+        let denied = NSError(domain: NSCocoaErrorDomain, code: NSFileWriteNoPermissionError)
+
+        #expect(TrashService.classify(readOnly) == .readOnlyVolume)
+        #expect(TrashService.classify(denied) == .permissionDenied)
+    }
+
+    @Test("EROFS is read-only; EACCES and EPERM are permission denials")
+    func classifiesPosixCodes() {
+        func wrapping(_ code: Int32) -> NSError {
+            NSError(domain: NSCocoaErrorDomain, code: NSFileWriteUnknownError, userInfo: [
+                NSUnderlyingErrorKey: NSError(domain: NSPOSIXErrorDomain, code: Int(code))
+            ])
+        }
+
+        #expect(TrashService.classify(wrapping(EROFS)) == .readOnlyVolume)
+        #expect(TrashService.classify(wrapping(EACCES)) == .permissionDenied)
+        #expect(TrashService.classify(wrapping(EPERM)) == .permissionDenied)
     }
 
     @Test("Blocked items are offered back for revealing, protected ones are not")

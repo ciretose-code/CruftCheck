@@ -343,6 +343,71 @@ struct OrphanHuntTests {
         }
     }
 
+    // MARK: - Partial trash failures
+    //
+    // A group whose paths straddle a permission boundary — a container that's refused, a
+    // plist that isn't — is the ordinary outcome when Full Disk Access is missing.
+
+    private func group(_ bundleID: String, paths: [(String, UInt64)]) -> OrphanGroup {
+        OrphanGroup(
+            bundleID: bundleID,
+            paths: paths.map { name, bytes in
+                OrphanPath(
+                    url: URL(fileURLWithPath: "/tmp/\(bundleID)/\(name)"),
+                    domain: .applicationSupport,
+                    bytes: bytes
+                )
+            }
+        )
+    }
+
+    @Test("A partly trashed group keeps only what's left, and shrinks to match")
+    func partialFailureShrinksTheGroup() throws {
+        let subject = group("com.dead.Ghost", paths: [("container", 900), ("plist", 100)])
+        let trashed: Set<URL> = [subject.paths[1].url]
+
+        let result = [subject].removingTrashedPaths(trashed)
+
+        let survivor = try #require(result.first)
+        #expect(survivor.paths.map(\.url.lastPathComponent) == ["container"])
+        // The old behaviour left this at 1000 while 100 bytes were already in the Trash.
+        #expect(survivor.bytes == 900)
+    }
+
+    @Test("A fully trashed group disappears")
+    func fullSuccessRemovesTheGroup() {
+        let subject = group("com.dead.Ghost", paths: [("a", 10), ("b", 20)])
+        let trashed = Set(subject.urls)
+
+        #expect([subject].removingTrashedPaths(trashed).isEmpty)
+    }
+
+    @Test("A group nothing touched is left exactly as it was")
+    func untouchedGroupIsUnchanged() throws {
+        let subject = group("com.dead.Ghost", paths: [("a", 10), ("b", 20)])
+
+        let result = [subject].removingTrashedPaths([URL(fileURLWithPath: "/tmp/unrelated")])
+
+        #expect(result.count == 1)
+        #expect(result.first?.paths.count == 2)
+        #expect(result.first?.bytes == 30)
+    }
+
+    @Test("Groups that survive keep their order and identity")
+    func survivorsKeepOrder() {
+        let first = group("com.dead.One", paths: [("a", 10)])
+        let second = group("com.dead.Two", paths: [("a", 20), ("b", 5)])
+        let third = group("com.dead.Three", paths: [("a", 30)])
+
+        let result = [first, second, third].removingTrashedPaths([
+            first.paths[0].url,
+            second.paths[0].url
+        ])
+
+        #expect(result.map(\.bundleID) == ["com.dead.Two", "com.dead.Three"])
+        #expect(result.first?.bytes == 5)
+    }
+
     // MARK: - Tail split
     //
     // The same rule as the Cache Diet's, over a different row type. The Orphan Hunt is the

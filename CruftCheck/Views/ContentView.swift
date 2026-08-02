@@ -168,13 +168,17 @@ private struct TrashFailureAlert: ViewModifier {
             ),
             presenting: scanner.failure
         ) { failure in
+            // Offered only when a grant is actually the fix. Sending someone to System
+            // Settings to enable something already enabled is worse than saying nothing.
             if failure.needsFullDiskAccess {
                 Button("Open Settings") {
                     NSWorkspace.shared.open(FullDiskAccess.settingsURL)
                     scanner.clearError()
                 }
-                // Finder holds privileges this app doesn't, so this works even while the
-                // grant is missing — the only route that needs no relaunch.
+            }
+            // Offered whenever macOS refused on permission grounds, whatever the cause.
+            // Finder holds privileges this app doesn't, and needs no relaunch.
+            if !failure.blockedURLs.isEmpty {
                 Button("Reveal in Finder") {
                     NSWorkspace.shared.activateFileViewerSelecting(failure.blockedURLs)
                     scanner.clearError()

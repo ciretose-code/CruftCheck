@@ -225,6 +225,30 @@ struct TailSplit<Item> {
     }
 }
 
+extension Array where Element == OrphanGroup {
+
+    /// Drops the paths that were successfully trashed, and any group left holding none.
+    ///
+    /// Path by path rather than group by group. Removing only groups whose every path
+    /// succeeded left a partially-trashed group still listing paths that no longer exist,
+    /// with a `bytes` total still counting them — so the list disagreed with the disk and
+    /// offered to trash items that were already in the Trash.
+    ///
+    /// Partial failure is the ordinary case whenever Full Disk Access is missing, not an
+    /// edge case: some of a group's paths sit in `~/Library/Containers` and are refused
+    /// while its preference file in `~/Library/Preferences` goes through.
+    func removingTrashedPaths(_ trashed: Set<URL>) -> [OrphanGroup] {
+        compactMap { group in
+            guard group.urls.contains(where: trashed.contains) else { return group }
+
+            var remaining = group
+            remaining.paths.removeAll { trashed.contains($0.url) }
+            // `bytes` is derived from `paths`, so the size corrects itself.
+            return remaining.paths.isEmpty ? nil : remaining
+        }
+    }
+}
+
 /// Result of a Cache Diet scan.
 struct CacheScan: Sendable {
     var entries: [CacheEntry] = []
