@@ -157,8 +157,14 @@ enum LibraryScanner {
         for (index, target) in targets.enumerated() {
             if isCancelled() { break }
 
-            let bytes = DirectorySizer.size(of: target.url, isCancelled: isCancelled)
-            let entry = CacheEntry(url: target.url, domain: target.domain, bytes: bytes)
+            let measured = DirectorySizer.measure(of: target.url, isCancelled: isCancelled)
+            let entry = CacheEntry(
+                url: target.url,
+                domain: target.domain,
+                bytes: measured.bytes,
+                lastModified: measured.lastModified
+            )
+            let bytes = measured.bytes
 
             // Partitioned here rather than filtered in the view, so the count the UI shows
             // and the list it shows can't drift apart.

@@ -92,6 +92,19 @@ struct CacheDietTests {
         #expect((split.major + split.tail).map(\.bytes) == sizes)
     }
 
+    @Test("Scanning records a modification date for every cache entry")
+    func scanRecordsCacheDates() throws {
+        try withLibraryFixture { fixture in
+            try fixture.makeBundleDirectory(.caches, "Homebrew", bytes: 2_048)
+            try fixture.makeBundleDirectory(.logs, "Strix", bytes: 1_024)
+
+            let scan = LibraryScanner.scanCaches(in: fixture.library)
+
+            #expect(scan.entries.count == 2)
+            #expect(scan.entries.allSatisfy { $0.lastModified != nil })
+        }
+    }
+
     // MARK: - Empty entries
     //
     // A row that can free nothing can't help the user choose, so it's kept out of the main

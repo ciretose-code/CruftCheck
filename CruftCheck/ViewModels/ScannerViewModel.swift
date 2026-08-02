@@ -40,6 +40,17 @@ final class ScannerViewModel {
     private(set) var diskAccess: FullDiskAccess.Status = .unknown
     /// The volume's own numbers, so the reclaimable total has something to be a fraction of.
     private(set) var capacity: VolumeCapacity?
+    /// Names of installed apps, for deciding whether anything owns a human-named cache
+    /// folder. Empty by default, and an empty index claims everything — a failed sweep must
+    /// not read as "nothing is installed".
+    private(set) var installedNames = InstalledAppNames()
+
+    /// Age at which an unmatched name becomes worth remarking on.
+    ///
+    /// Longer than any plausible "I use this occasionally" cycle. Recent folders are far
+    /// more likely to belong to an app installed somewhere the sweep doesn't look than to
+    /// anything genuinely abandoned.
+    static let unclaimedMinimumMonths = 12
 
     /// What to tell the user when items couldn't be moved, and what to offer them about it.
     struct TrashFailure {
@@ -77,6 +88,21 @@ final class ScannerViewModel {
         case .orphanHunt: orphans.reduce(0) { $0 + $1.bytes }
         case .cacheDiet:  caches.reduce(0) { $0 + $1.bytes }
         }
+    }
+
+    /// Why this cache is worth remarking on, or `nil` — which is the usual answer.
+    ///
+    /// Both signals are required. An unmatched name alone usually means the app lives
+    /// somewhere the sweep doesn't look; age alone just means an app you open rarely. Only
+    /// together do they suggest nothing on this Mac will ever want the folder back, which is
+    /// the one thing that makes clearing it permanent rather than temporary.
+    func unclaimedLabel(for entry: CacheEntry) -> String? {
+        guard !installedNames.claims(entry.name) else { return nil }
+        guard let months = Staleness.months(since: entry.lastModified),
+              months >= Self.unclaimedMinimumMonths
+        else { return nil }
+
+        return "No installed app claims this · untouched \(Staleness.duration(months: months))"
     }
 
     var hasResults: Bool {
@@ -156,6 +182,13 @@ final class ScannerViewModel {
     private func runCacheDiet() async {
         let flag = scanFlag
         let report = progressReporter(flag)
+
+        // Pure Foundation, so unlike the Orphan Hunt's LaunchServices step this needs no
+        // main-actor hop.
+        installedNames = await Background.run {
+            let installed = AppBundleIndex.installed()
+            return InstalledAppNames(appNames: installed.names, identifiers: installed.identifiers)
+        }
 
         let result = await Background.run {
             LibraryScanner.scanCaches(isCancelled: { flag.isCancelled }, onProgress: report)

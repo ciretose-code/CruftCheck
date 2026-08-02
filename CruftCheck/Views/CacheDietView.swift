@@ -19,7 +19,11 @@ struct CacheDietView: View {
     var body: some View {
         List {
             ForEach(split.major) { entry in
-                CacheRow(entry: entry, share: share(of: entry)) {
+                CacheRow(
+                    entry: entry,
+                    share: share(of: entry),
+                    unclaimed: scanner.unclaimedLabel(for: entry)
+                ) {
                     Task { await scanner.clearCache(entry) }
                 }
             }
@@ -39,7 +43,11 @@ struct CacheDietView: View {
                     // No bars in here either: every one would draw at the minimum width,
                     // which is why these were grouped in the first place.
                     ForEach(split.tail) { entry in
-                        CacheRow(entry: entry, share: nil) {
+                        CacheRow(
+                            entry: entry,
+                            share: nil,
+                            unclaimed: scanner.unclaimedLabel(for: entry)
+                        ) {
                             Task { await scanner.clearCache(entry) }
                         }
                         .padding(.leading, 18)
@@ -118,6 +126,8 @@ private struct CacheRow: View {
     let entry: CacheEntry
     /// `nil` inside the tail group, where a bar would carry no information.
     let share: Double?
+    /// Set when nothing installed appears to own this folder — see `unclaimedLabel(for:)`.
+    let unclaimed: String?
     let clear: () -> Void
 
     @State private var isConfirming = false
@@ -135,9 +145,26 @@ private struct CacheRow: View {
                     .truncationMode(.middle)
 
                 // Caches and Logs both feed this list and can hold the same name.
-                Text(entry.domain.rawValue)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 7) {
+                    Text(entry.domain.rawValue)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    if let unclaimed {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(.orange)
+                                .frame(width: 4, height: 4)
+                            Text(unclaimed)
+                        }
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 1)
+                        .overlay(Capsule().strokeBorder(.quaternary, lineWidth: 1))
+                        .fixedSize()
+                    }
+                }
             }
             // Flexible, so every column to the right lines up regardless of name length.
             // Without this a long name pushes the byte counts out of alignment and the
@@ -175,7 +202,15 @@ private struct CacheRow: View {
                     Button("Move to Trash", role: .destructive, action: clear)
                     Button("Cancel", role: .cancel) {}
                 } message: {
-                    Text("Frees \(ByteFormat.string(entry.bytes)). The app rebuilds this cache as needed, and you can restore it from the Trash.")
+                    // The promise changes with the badge. "The app rebuilds this" is the
+                    // normal case and the reason clearing a cache is safe; it's also the
+                    // reason clearing one is temporary. When nothing claims the folder,
+                    // neither half holds — so say the truer, more useful thing.
+                    Text(
+                        unclaimed == nil
+                            ? "Frees \(ByteFormat.string(entry.bytes)). The app rebuilds this cache as needed, and you can restore it from the Trash."
+                            : "Frees \(ByteFormat.string(entry.bytes)). Nothing on this Mac appears to own this folder, so unlike a normal cache nothing should rebuild it. You can restore it from the Trash."
+                    )
                 }
         }
         .padding(.vertical, 5)

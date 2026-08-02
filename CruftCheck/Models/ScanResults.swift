@@ -111,15 +111,8 @@ struct OrphanGroup: Identifiable, Hashable, Sendable {
     /// an app uninstalled last week leaves recent files behind, and a chip reading
     /// "Untouched 6 days" invites the user to weigh a number that means nothing.
     var stalenessLabel: String? {
-        guard let lastModified else { return nil }
-
-        let calendar = Calendar.current
-        let months = calendar.dateComponents([.month], from: lastModified, to: .now).month ?? 0
-        guard months >= 3 else { return nil }
-
-        if months >= 24 { return "Untouched \(months / 12) years" }
-        if months >= 12 { return "Untouched over a year" }
-        return "Untouched \(months) months"
+        guard let months = Staleness.months(since: lastModified), months >= 3 else { return nil }
+        return "Untouched " + Staleness.duration(months: months)
     }
 }
 
@@ -128,9 +121,35 @@ struct CacheEntry: Identifiable, Hashable, Sendable {
     let url: URL
     let domain: LibraryDomain
     var bytes: UInt64
+    /// Newest modification anywhere inside. Feeds the unclaimed badge, which needs age as
+    /// well as an unmatched name before it will say anything.
+    var lastModified: Date?
 
     var id: URL { url }
     var name: String { url.lastPathComponent }
+}
+
+/// How long since something changed, phrased once for every caller.
+///
+/// Two features now ask this at different thresholds — the Orphan Hunt's chip from three
+/// months, the Cache Diet's unclaimed badge from twelve — so the arithmetic and the wording
+/// live here rather than being restated with a different rounding rule in each place.
+enum Staleness {
+
+    /// Whole months since `date`, or `nil` when there's no date to measure from. Absent is
+    /// not the same as old and must never be rendered as it.
+    static func months(since date: Date?) -> Int? {
+        guard let date else { return nil }
+        return Calendar.current.dateComponents([.month], from: date, to: .now).month
+    }
+
+    /// "2 years", "over a year", "5 months" — the duration alone, so callers can put it in
+    /// whatever sentence they need.
+    static func duration(months: Int) -> String {
+        if months >= 24 { return "\(months / 12) years" }
+        if months >= 12 { return "over a year" }
+        return "\(months) months"
+    }
 }
 
 /// The thresholds governing when a list stops drawing its tail row by row.

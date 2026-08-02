@@ -24,19 +24,42 @@ enum AppBundleIndex {
         return roots
     }()
 
-    /// Every bundle identifier found in the standard application directories.
-    static func installedIdentifiers() -> Set<String> {
+    /// What one sweep of the application directories found.
+    struct Installed: Sendable {
         var identifiers: Set<String> = []
+        /// Names as a person would recognise them: the bundle's file name without `.app`,
+        /// plus `CFBundleName` when it differs. Human-named Library folders are named after
+        /// these, never after identifiers.
+        var names: Set<String> = []
+    }
+
+    /// Identifiers and names in a single sweep.
+    ///
+    /// One pass rather than two: opening every `Bundle` in `/Applications` is the expensive
+    /// part, and both answers come out of the same open.
+    static func installed() -> Installed {
+        var result = Installed()
 
         for root in searchRoots {
             for appURL in appBundles(in: root) {
-                if let id = Bundle(url: appURL)?.bundleIdentifier {
-                    identifiers.insert(id.lowercased())
+                result.names.insert(appURL.deletingPathExtension().lastPathComponent)
+
+                guard let bundle = Bundle(url: appURL) else { continue }
+                if let id = bundle.bundleIdentifier {
+                    result.identifiers.insert(id.lowercased())
+                }
+                if let name = bundle.object(forInfoDictionaryKey: "CFBundleName") as? String {
+                    result.names.insert(name)
                 }
             }
         }
 
-        return identifiers
+        return result
+    }
+
+    /// Every bundle identifier found in the standard application directories.
+    static func installedIdentifiers() -> Set<String> {
+        installed().identifiers
     }
 
     /// Vendor prefixes ("com.google", "fr.handbrake") of everything installed.

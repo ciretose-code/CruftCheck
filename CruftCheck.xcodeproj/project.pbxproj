@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		025FF0CBC59A04ACB832D067 /* ScanMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A5C8FBE1A5A1EC0706ECD85 /* ScanMode.swift */; };
 		10FF2BE808F9631B898E29D9 /* Background.swift in Sources */ = {isa = PBXBuildFile; fileRef = 855DB45A687158FF594FC5D5 /* Background.swift */; };
+		123144970DB5D267ED2CD976 /* InstalledAppNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB746BA6BC7576D967F83F6 /* InstalledAppNames.swift */; };
 		18A5E18ECD3D958695ED8AFD /* CancellationFlag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97BC50AA007CDFF981801F91 /* CancellationFlag.swift */; };
 		18DE38FEA6A096C9B72C3A4B /* DirectorySizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50F971176F129A77FF5388E9 /* DirectorySizer.swift */; };
 		280A899CA1ED3153E9CD2AD8 /* CacheDietTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFF5992888F9C79453F301B3 /* CacheDietTests.swift */; };
@@ -20,6 +21,7 @@
 		5E464577DFB6633F4538F7EA /* OrphanHuntTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6724ACB4C58951BF862DFB22 /* OrphanHuntTests.swift */; };
 		5FEF65FBBB05B42BB8DC8714 /* VolumeCapacity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D581643576CD9568B9C2B077 /* VolumeCapacity.swift */; };
 		75B069C39B83A5B79FB00AB4 /* DirectorySizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 797CE0BA5B8897E3CA01B2CC /* DirectorySizerTests.swift */; };
+		7E5C2122B368E3CFF15652EA /* InstalledAppNamesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8798D0CFF288A3C2229A9F89 /* InstalledAppNamesTests.swift */; };
 		9468538AC994C880F8FD0FA5 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA9CEFE093B2056C8642A46E /* ContentView.swift */; };
 		AD1692E96FBCFCC22F96CB94 /* FullDiskAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1036ABCF92E8B4B0AFDCAEC5 /* FullDiskAccess.swift */; };
 		B7D3EEAED6919EDD7EA2837A /* ScanResults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CF7CC55EB8FF58EED351B89 /* ScanResults.swift */; };
@@ -60,6 +62,7 @@
 		797CE0BA5B8897E3CA01B2CC /* DirectorySizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectorySizerTests.swift; sourceTree = "<group>"; };
 		7CF7CC55EB8FF58EED351B89 /* ScanResults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanResults.swift; sourceTree = "<group>"; };
 		855DB45A687158FF594FC5D5 /* Background.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Background.swift; sourceTree = "<group>"; };
+		8798D0CFF288A3C2229A9F89 /* InstalledAppNamesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledAppNamesTests.swift; sourceTree = "<group>"; };
 		90F6C4E2E4B8ED76705D7321 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		97BC50AA007CDFF981801F91 /* CancellationFlag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancellationFlag.swift; sourceTree = "<group>"; };
 		9C95EC99E8781A0E709EBE35 /* TrashService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrashService.swift; sourceTree = "<group>"; };
@@ -67,6 +70,7 @@
 		B68EF41CC9484765970693A0 /* TrashServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrashServiceTests.swift; sourceTree = "<group>"; };
 		B7362B048CBB6D2ABF5AE0F1 /* ScannerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewModel.swift; sourceTree = "<group>"; };
 		BA9EE5AAF353F902690C5E82 /* CruftCheck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CruftCheck.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BEB746BA6BC7576D967F83F6 /* InstalledAppNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledAppNames.swift; sourceTree = "<group>"; };
 		D581643576CD9568B9C2B077 /* VolumeCapacity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeCapacity.swift; sourceTree = "<group>"; };
 		DCE452DBE3F4607491FFB34F /* AppBundleIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBundleIndex.swift; sourceTree = "<group>"; };
 		E3B6492CF430D56D10FA703A /* LibraryFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryFixture.swift; sourceTree = "<group>"; };
@@ -108,6 +112,7 @@
 				50F971176F129A77FF5388E9 /* DirectorySizer.swift */,
 				1036ABCF92E8B4B0AFDCAEC5 /* FullDiskAccess.swift */,
 				5E376F339A759A5F6136C051 /* InstalledAppIndex.swift */,
+				BEB746BA6BC7576D967F83F6 /* InstalledAppNames.swift */,
 				37BC5BEF2A028C5CFDF3886F /* LibraryPaths.swift */,
 				7837F7B26FC1433ECC4670EE /* LibraryScanner.swift */,
 				9C95EC99E8781A0E709EBE35 /* TrashService.swift */,
@@ -121,6 +126,7 @@
 			children = (
 				EFF5992888F9C79453F301B3 /* CacheDietTests.swift */,
 				797CE0BA5B8897E3CA01B2CC /* DirectorySizerTests.swift */,
+				8798D0CFF288A3C2229A9F89 /* InstalledAppNamesTests.swift */,
 				E3B6492CF430D56D10FA703A /* LibraryFixture.swift */,
 				6724ACB4C58951BF862DFB22 /* OrphanHuntTests.swift */,
 				B68EF41CC9484765970693A0 /* TrashServiceTests.swift */,
@@ -252,6 +258,7 @@
 			files = (
 				280A899CA1ED3153E9CD2AD8 /* CacheDietTests.swift in Sources */,
 				75B069C39B83A5B79FB00AB4 /* DirectorySizerTests.swift in Sources */,
+				7E5C2122B368E3CFF15652EA /* InstalledAppNamesTests.swift in Sources */,
 				D294FD1D0C117828A60F8190 /* LibraryFixture.swift in Sources */,
 				5E464577DFB6633F4538F7EA /* OrphanHuntTests.swift in Sources */,
 				E5DC189BB68618879B54A2E6 /* TrashServiceTests.swift in Sources */,
@@ -274,6 +281,7 @@
 				5806F2E12A862DD4584E75BC /* FlowLayout.swift in Sources */,
 				AD1692E96FBCFCC22F96CB94 /* FullDiskAccess.swift in Sources */,
 				44EF2F9AECF10155B5A2F64C /* InstalledAppIndex.swift in Sources */,
+				123144970DB5D267ED2CD976 /* InstalledAppNames.swift in Sources */,
 				36B2515AEDA8936FD62A8008 /* LibraryPaths.swift in Sources */,
 				D7456734EB68E558363C3D8D /* LibraryScanner.swift in Sources */,
 				E4A6B1B9E88FDB0033847E4D /* OrphanHuntView.swift in Sources */,
