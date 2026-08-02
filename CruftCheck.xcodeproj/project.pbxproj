@@ -34,6 +34,7 @@
 		DCAD8E9CCB0AB5A87D3CAAC2 /* CacheDietView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AE26888477B948E1E2E2E0D /* CacheDietView.swift */; };
 		E4A6B1B9E88FDB0033847E4D /* OrphanHuntView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C830DDA956C1442B96D66D6 /* OrphanHuntView.swift */; };
 		E5DC189BB68618879B54A2E6 /* TrashServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68EF41CC9484765970693A0 /* TrashServiceTests.swift */; };
+		ED4A5515E7B82A316DEC5302 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 9773949FD6759808ABCDE624 /* AppIcon.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,6 +65,7 @@
 		855DB45A687158FF594FC5D5 /* Background.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Background.swift; sourceTree = "<group>"; };
 		8798D0CFF288A3C2229A9F89 /* InstalledAppNamesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledAppNamesTests.swift; sourceTree = "<group>"; };
 		90F6C4E2E4B8ED76705D7321 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		9773949FD6759808ABCDE624 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		97BC50AA007CDFF981801F91 /* CancellationFlag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancellationFlag.swift; sourceTree = "<group>"; };
 		9C95EC99E8781A0E709EBE35 /* TrashService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrashService.swift; sourceTree = "<group>"; };
 		AA9CEFE093B2056C8642A46E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -137,6 +139,7 @@
 		A8F93199DBD59A38F9AD66A4 /* CruftCheck */ = {
 			isa = PBXGroup;
 			children = (
+				9773949FD6759808ABCDE624 /* AppIcon.icon */,
 				FF3DDED4DDCEAC7DF5A2C442 /* CruftCheck.entitlements */,
 				ED06F72D29FA5C082F0ED2FE /* CruftCheckApp.swift */,
 				90F6C4E2E4B8ED76705D7321 /* Info.plist */,
@@ -200,6 +203,7 @@
 			buildConfigurationList = 199F0F7F53670FF51F8B57AC /* Build configuration list for PBXNativeTarget "CruftCheck" */;
 			buildPhases = (
 				E3F96182BCB22C876593907B /* Sources */,
+				FB775C0F18289430F681EA1F /* Resources */,
 			);
 			buildRules = (
 			);
@@ -250,6 +254,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FB775C0F18289430F681EA1F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ED4A5515E7B82A316DEC5302 /* AppIcon.icon in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		A5D0B4DFC73904085E50D40F /* Sources */ = {
@@ -390,6 +405,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 6D39SX3E6V;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -401,6 +417,7 @@
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ciretose.mac.util.CruftCheck;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
 			};
@@ -477,6 +494,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 6D39SX3E6V;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -488,6 +506,7 @@
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.ciretose.mac.util.CruftCheck;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
 			};

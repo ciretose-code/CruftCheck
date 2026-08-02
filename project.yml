@@ -41,6 +41,13 @@ targets:
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
         ENABLE_HARDENED_RUNTIME: YES
+        # Names the Icon Composer document in CruftCheck/AppIcon.icon. Without it the
+        # build produces an app with the generic blank icon and no warning.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # From Xcode's "update to recommended settings", carried here so the next
+        # `xcodegen generate` doesn't quietly drop them again.
+        DEAD_CODE_STRIPPING: YES
+        STRING_CATALOG_GENERATE_SYMBOLS: YES
         # Signed with the ciretose team. Distribution is outside the Mac App Store,
         # so this is a development identity, not a Developer ID one.
         CODE_SIGN_IDENTITY: "Apple Development"
