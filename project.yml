@@ -4,6 +4,21 @@ options:
   deploymentTarget:
     macOS: "14.0"
   createIntermediateGroups: true
+  # Stamps LastUpgradeCheck. XcodeGen defaults to 1430, which makes Xcode offer
+  # "update to recommended settings" on every open no matter how current the
+  # settings actually are — and accepting that offer edits the generated project,
+  # which the next generate discards.
+  xcodeVersion: "26.5"
+
+# Project-level, so both targets inherit one copy. Xcode's recommended-settings
+# check asks for these at the project level specifically, and it keeps asking if
+# they're only set per-target.
+settings:
+  base:
+    DEAD_CODE_STRIPPING: YES
+    STRING_CATALOG_GENERATE_SYMBOLS: YES
+    ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOL_EXTENSIONS: YES
+    DEVELOPMENT_TEAM: 6D39SX3E6V
 
 targets:
   CruftCheck:
@@ -44,24 +59,20 @@ targets:
         # Names the Icon Composer document in CruftCheck/AppIcon.icon. Without it the
         # build produces an app with the generic blank icon and no warning.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        # From Xcode's "update to recommended settings", carried here so the next
-        # `xcodegen generate` doesn't quietly drop them again.
-        DEAD_CODE_STRIPPING: YES
-        STRING_CATALOG_GENERATE_SYMBOLS: YES
-        # Signed with the ciretose team. Distribution is outside the Mac App Store,
-        # so this is a development identity, not a Developer ID one.
+        # Both configurations build with a development identity. Developer ID signing
+        # happens at *export*, not at build: Scripts/ExportOptions.plist sets
+        # method=developer-id, and xcodebuild -exportArchive re-signs the archived app
+        # with the Developer ID certificate on the way out.
+        #
+        # Forcing CODE_SIGN_IDENTITY to "Developer ID Application" on Release instead is
+        # the thing Xcode's "Switch to Development Signing" recommendation exists to undo,
+        # so it reappears as a pending change every time the project is opened. The export
+        # step is where the identity is verified — see release.sh, which fails if the
+        # exported app is not Developer ID signed.
         CODE_SIGN_IDENTITY: "Apple Development"
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: 6D39SX3E6V
         COMBINE_HIDPI_IMAGES: YES
         ENABLE_USER_SCRIPT_SANDBOXING: NO
-      configs:
-        # Releases go out signed with Developer ID and are notarized — an Apple Development
-        # certificate is rejected by notarization, and Gatekeeper would refuse the result on
-        # every Mac but the one that built it. Debug is untouched, so day-to-day builds and
-        # ⌘U keep working without this certificate installed.
-        Release:
-          CODE_SIGN_IDENTITY: "Developer ID Application"
 
   CruftCheckTests:
     type: bundle.unit-test
@@ -79,9 +90,10 @@ targets:
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
         GENERATE_INFOPLIST_FILE: YES
+        # DEVELOPMENT_TEAM is inherited from the project, not restated here — that's
+        # Xcode's "Inherit Development Team from Project Settings" recommendation.
         CODE_SIGN_IDENTITY: "Apple Development"
         CODE_SIGN_STYLE: Automatic
-        DEVELOPMENT_TEAM: 6D39SX3E6V
 
 schemes:
   CruftCheck:

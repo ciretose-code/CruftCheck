@@ -72,8 +72,19 @@ The script edits `MARKETING_VERSION`, `CFBundleShortVersionString` and `CFBundle
 `project.yml`, regenerates, then reads the values back out of the generated `Info.plist` to
 confirm they took.
 
-Release builds sign with `Developer ID Application`; Debug stays on `Apple Development`, so
-⌘R and ⌘U keep working without the distribution certificate installed.
+**Both configurations build with `Apple Development`.** Developer ID signing happens at
+*export*, not at build: `ExportOptions.plist` sets `method: developer-id`, and
+`xcodebuild -exportArchive` re-signs the archived app with the distribution certificate on
+the way out. `release.sh` fails if the exported app isn't Developer ID signed, which is the
+check that matters.
+
+Pinning `CODE_SIGN_IDENTITY` to `Developer ID Application` on Release instead is precisely
+what Xcode's "Switch to Development Signing" recommendation exists to undo, so it comes back
+as a pending project change every time the project is opened. `project.yml` therefore
+matches Xcode's recommended settings exactly — including `LastUpgradeCheck` via
+`options.xcodeVersion`, which XCodeGen otherwise stamps at 1430 and which alone makes Xcode
+offer the upgrade dialog on every open. Accepting that dialog edits the generated project,
+which the next `xcodegen generate` discards, so the two must agree.
 
 ## Safety model
 
