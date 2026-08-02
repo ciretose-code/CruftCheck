@@ -11,6 +11,74 @@ struct DirectorySizerTests {
         #expect(DirectorySizer.size(of: missing) == 0)
     }
 
+    // MARK: - Volume boundaries
+
+    @discardableResult
+    private func hdiutil(_ arguments: [String]) -> Int32 {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
+        process.arguments = arguments
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        do { try process.run() } catch { return -1 }
+        process.waitUntilExit()
+        return process.terminationStatus
+    }
+
+    /// Pins behaviour the sizer depends on but does not implement: `NSDirectoryEnumerator`
+    /// yields a mount point and then stops, rather than descending onto the mounted volume.
+    ///
+    /// This matters because `du` does the opposite. On a Mac with Xcode installed,
+    /// /Library/Developer/CoreSimulator holds one read-only APFS volume per simulator
+    /// runtime; `du` walks into all of them and reports 145 GB for a tree whose real payload
+    /// is 37 GB. Anything comparing this app's totals against `du` will see the difference,
+    /// and this app is the one that's right — bytes on another volume are not reclaimable by
+    /// trashing the directory they appear under.
+    ///
+    /// Nothing in `DirectorySizer` enforces that, so if Foundation ever changed its mind the
+    /// totals would silently inflate. Mounting a real volume is the only honest way to check
+    /// a volume boundary, so this test makes one; it skips rather than fails when the image
+    /// can't be created, since the claim is about the enumerator, not about hdiutil.
+    @Test("A mounted volume is not counted as part of the directory containing it")
+    func doesNotCrossVolumeBoundaries() throws {
+        let fileManager = FileManager.default
+        let stem = "CruftCheckVolume-\(UUID().uuidString)"
+
+        // The image lives outside the measured tree, so its own size can't muddy the result.
+        let image = URL(fileURLWithPath: NSTemporaryDirectory()).appending(path: "\(stem).dmg")
+        let root = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appending(path: stem, directoryHint: .isDirectory)
+        let mount = root.appending(path: "mnt", directoryHint: .isDirectory)
+
+        try fileManager.createDirectory(at: mount, withIntermediateDirectories: true)
+        defer {
+            try? fileManager.removeItem(at: root)
+            try? fileManager.removeItem(at: image)
+        }
+
+        // 64 kB that genuinely lives in the directory.
+        let local = root.appending(path: "local.bin")
+        try Data(repeating: 0x41, count: 64 * 1024).write(to: local)
+
+        guard hdiutil(["create", "-size", "20m", "-fs", "HFS+", "-volname", "CruftCheckTest",
+                       "-quiet", "-ov", image.path(percentEncoded: false)]) == 0,
+              hdiutil(["attach", image.path(percentEncoded: false),
+                       "-mountpoint", mount.path(percentEncoded: false),
+                       "-nobrowse", "-quiet"]) == 0
+        else { return }
+        defer { hdiutil(["detach", mount.path(percentEncoded: false), "-quiet", "-force"]) }
+
+        // 4 MB on the mounted volume — sixty times the local file, so counting it is obvious.
+        let onVolume = mount.appending(path: "big.bin")
+        try Data(repeating: 0x42, count: 4 * 1024 * 1024).write(to: onVolume)
+        #expect(fileManager.fileExists(atPath: onVolume.path(percentEncoded: false)))
+
+        let measured = DirectorySizer.measure(of: root)
+
+        #expect(measured.bytes >= 64 * 1024, "the local file must still be counted")
+        #expect(measured.bytes < 1024 * 1024, "mounted content must not be counted")
+    }
+
     // MARK: - Volume capacity
 
     @Test("Used is total minus available")
