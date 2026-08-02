@@ -36,9 +36,15 @@ targets:
         LSApplicationCategoryType: public.app-category.utilities
         LSMinimumSystemVersion: "14.0"
         NSHumanReadableCopyright: ""
-        # Shown when macOS prompts for the Full Disk Access needed to read
-        # ~/Library/Containers and ~/Library/Application Support in full.
-        NSDesktopFolderUsageDescription: Cruft/Check never reads your Desktop.
+        # No TCC purpose strings here on purpose. They are per-category rationales shown
+        # inside the prompt for that category — NSDesktopFolderUsageDescription appears in
+        # "would like to access files in your Desktop folder", and nothing else. The app
+        # reads ~/Library and the application directories, never ~/Desktop, so the prompt
+        # can't fire and the string would never be seen.
+        #
+        # Full Disk Access, which is what this app actually needs, has no purpose string at
+        # all: it's granted by hand in System Settings and macOS supplies its own wording.
+        # There is no key that annotates it.
     entitlements:
       path: CruftCheck/CruftCheck.entitlements
       properties:
