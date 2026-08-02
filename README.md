@@ -39,6 +39,42 @@ so the safety-critical paths are exercised without waiting for real cruft to acc
 One test in `TrashServiceTests` genuinely moves a uniquely-named file to the Trash — that
 recoverability is the whole safety guarantee — and removes that exact item afterward.
 
+## Releasing
+
+```sh
+./Scripts/release.sh              # bump the build number, keep the version
+./Scripts/release.sh 0.2          # set the version to 0.2 and bump the build
+./Scripts/release.sh --dry-run    # build, sign and package; publish nothing
+```
+
+The script tests, archives, exports with Developer ID, builds a drag-to-Applications DMG,
+notarizes and staples it, commits the version bump, and publishes a GitHub release.
+
+Two prerequisites, both one-time:
+
+```sh
+# 1. A Developer ID Application certificate in the login keychain.
+#    Xcode › Settings › Accounts › Manage Certificates › + › Developer ID Application
+#    An "Apple Development" certificate cannot be notarized.
+
+# 2. Notary credentials, stored in the keychain
+xcrun notarytool store-credentials "cruftcheck-notary" \
+  --key ~/.private_keys/AuthKey_<KEY_ID>.p8 --key-id <KEY_ID> --issuer <ISSUER_ID>
+```
+
+Both are verified in preflight, along with a clean tree on `main` in sync with `origin`,
+before anything slow runs — a missing certificate should cost a second, not a full archive.
+Set `NOTARY_PROFILE=<name>` to reuse credentials stored under another name.
+
+**The version lives in `project.yml`, not in `project.pbxproj`.** `agvtool` writes to the
+pbxproj, which the next `xcodegen generate` overwrites, so the bump would silently vanish.
+The script edits `MARKETING_VERSION`, `CFBundleShortVersionString` and `CFBundleVersion` in
+`project.yml`, regenerates, then reads the values back out of the generated `Info.plist` to
+confirm they took.
+
+Release builds sign with `Developer ID Application`; Debug stays on `Apple Development`, so
+⌘R and ⌘U keep working without the distribution certificate installed.
+
 ## Safety model
 
 The app is deliberately biased toward doing nothing:

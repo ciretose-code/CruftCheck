@@ -48,6 +48,13 @@ targets:
         DEVELOPMENT_TEAM: 6D39SX3E6V
         COMBINE_HIDPI_IMAGES: YES
         ENABLE_USER_SCRIPT_SANDBOXING: NO
+      configs:
+        # Releases go out signed with Developer ID and are notarized — an Apple Development
+        # certificate is rejected by notarization, and Gatekeeper would refuse the result on
+        # every Mac but the one that built it. Debug is untouched, so day-to-day builds and
+        # ⌘U keep working without this certificate installed.
+        Release:
+          CODE_SIGN_IDENTITY: "Developer ID Application"
 
   CruftCheckTests:
     type: bundle.unit-test
