@@ -6,7 +6,7 @@ import SwiftUI
 /// No selection model here — each row clears independently, because clearing one app's
 /// cache is a small, reversible, per-app decision rather than a batch operation.
 ///
-/// Rows below `CacheListSplit.threshold` are collapsed behind one summary row. Their bars
+/// Rows below `TailSplitRule.threshold` are collapsed behind one summary row. Their bars
 /// would all render at the same minimum width, so drawing them individually spends most of
 /// the list on rows that can't be told apart.
 struct CacheDietView: View {
@@ -51,7 +51,7 @@ struct CacheDietView: View {
         .alternatingRowBackgrounds()
     }
 
-    private var split: CacheListSplit { CacheListSplit(entries: scanner.caches) }
+    private var split: TailSplit<CacheEntry> { TailSplit(scanner.caches, bytes: \.bytes) }
 
     /// Each row's size relative to the largest row, for the proportion bar.
     private func share(of entry: CacheEntry) -> Double {

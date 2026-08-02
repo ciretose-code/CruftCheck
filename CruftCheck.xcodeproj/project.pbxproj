@@ -18,6 +18,7 @@
 		4E4DDA88DF7A8B07F4289C33 /* AppPresence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 759483F3D51746C827E9E2E5 /* AppPresence.swift */; };
 		5806F2E12A862DD4584E75BC /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2398413143EF8A2DB72FC81C /* FlowLayout.swift */; };
 		5E464577DFB6633F4538F7EA /* OrphanHuntTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6724ACB4C58951BF862DFB22 /* OrphanHuntTests.swift */; };
+		5FEF65FBBB05B42BB8DC8714 /* VolumeCapacity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D581643576CD9568B9C2B077 /* VolumeCapacity.swift */; };
 		75B069C39B83A5B79FB00AB4 /* DirectorySizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 797CE0BA5B8897E3CA01B2CC /* DirectorySizerTests.swift */; };
 		9468538AC994C880F8FD0FA5 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA9CEFE093B2056C8642A46E /* ContentView.swift */; };
 		AD1692E96FBCFCC22F96CB94 /* FullDiskAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1036ABCF92E8B4B0AFDCAEC5 /* FullDiskAccess.swift */; };
@@ -66,6 +67,7 @@
 		B68EF41CC9484765970693A0 /* TrashServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrashServiceTests.swift; sourceTree = "<group>"; };
 		B7362B048CBB6D2ABF5AE0F1 /* ScannerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannerViewModel.swift; sourceTree = "<group>"; };
 		BA9EE5AAF353F902690C5E82 /* CruftCheck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CruftCheck.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D581643576CD9568B9C2B077 /* VolumeCapacity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VolumeCapacity.swift; sourceTree = "<group>"; };
 		DCE452DBE3F4607491FFB34F /* AppBundleIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBundleIndex.swift; sourceTree = "<group>"; };
 		E3B6492CF430D56D10FA703A /* LibraryFixture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryFixture.swift; sourceTree = "<group>"; };
 		ED06F72D29FA5C082F0ED2FE /* CruftCheckApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CruftCheckApp.swift; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 				37BC5BEF2A028C5CFDF3886F /* LibraryPaths.swift */,
 				7837F7B26FC1433ECC4670EE /* LibraryScanner.swift */,
 				9C95EC99E8781A0E709EBE35 /* TrashService.swift */,
+				D581643576CD9568B9C2B077 /* VolumeCapacity.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -278,6 +281,7 @@
 				B7D3EEAED6919EDD7EA2837A /* ScanResults.swift in Sources */,
 				D78AA0998DCA11E1D16AAD29 /* ScannerViewModel.swift in Sources */,
 				C092A1F983F9A55C224DDCDF /* TrashService.swift in Sources */,
+				5FEF65FBBB05B42BB8DC8714 /* VolumeCapacity.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

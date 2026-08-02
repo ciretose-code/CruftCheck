@@ -11,6 +11,46 @@ struct DirectorySizerTests {
         #expect(DirectorySizer.size(of: missing) == 0)
     }
 
+    // MARK: - Volume capacity
+
+    @Test("Used is total minus available")
+    func computesUsed() {
+        let capacity = VolumeCapacity(total: 494_000_000_000, available: 89_200_000_000)
+        #expect(capacity.used == 404_800_000_000)
+    }
+
+    /// A volume reporting more available than total is nonsense, but it must not underflow
+    /// into an enormous "used" figure on an unsigned type.
+    @Test("An impossible reading clamps instead of underflowing")
+    func clampsImpossibleReading() {
+        let capacity = VolumeCapacity(total: 100, available: 500)
+        #expect(capacity.used == 0)
+    }
+
+    @Test("Share is the fraction of the whole volume")
+    func computesShare() {
+        let capacity = VolumeCapacity(total: 1_000, available: 400)
+        #expect(capacity.share(of: 250) == 0.25)
+        #expect(capacity.share(of: 0) == 0)
+    }
+
+    @Test("Share never exceeds the whole, and never divides by zero")
+    func shareIsBounded() {
+        #expect(VolumeCapacity(total: 1_000, available: 0).share(of: 5_000) == 1)
+        #expect(VolumeCapacity(total: 0, available: 0).share(of: 100) == 0)
+    }
+
+    /// Reads the real volume. Asserts only the invariants, since the actual numbers belong
+    /// to whatever machine is running the tests.
+    @Test("The current volume reports coherent numbers")
+    func readsCurrentVolume() throws {
+        let capacity = try #require(VolumeCapacity.current())
+
+        #expect(capacity.total > 0)
+        #expect(capacity.available <= capacity.total)
+        #expect(capacity.used + capacity.available == capacity.total)
+    }
+
     // MARK: - Recency
 
     /// The whole point of walking for the date rather than reading the root's own mtime:

@@ -13,6 +13,8 @@ import SwiftUI
 struct OrphanHuntView: View {
     @Bindable var scanner: ScannerViewModel
 
+    @State private var isTailExpanded = false
+
     var body: some View {
         List {
             ForEach(sections) { section in
@@ -26,6 +28,24 @@ struct OrphanHuntView: View {
                     }
                 } header: {
                     SectionHeader(section: section)
+                }
+            }
+
+            if !split.tail.isEmpty {
+                TailSummary(
+                    count: split.tail.count,
+                    bytes: split.tailBytes,
+                    isExpanded: $isTailExpanded,
+                    isOn: tailBinding
+                )
+
+                if isTailExpanded {
+                    // Flat siblings rather than children of the summary row: a `ForEach`
+                    // nested inside a row's own stack lays out as one row and renders blank.
+                    ForEach(split.tail) { group in
+                        OrphanRow(group: group, share: nil, isOn: binding(for: group))
+                            .padding(.leading, 18)
+                    }
                 }
             }
         }
@@ -50,11 +70,27 @@ struct OrphanHuntView: View {
 
     // MARK: - Sectioning
 
+    /// One identifier commonly holds most of the bytes — 91% of the total, on the machine
+    /// this was built against — which leaves every other bar at the minimum width. The tail
+    /// is split off before sectioning so the sections describe rows worth reading.
+    private var split: TailSplit<OrphanGroup> { TailSplit(scanner.orphans, bytes: \.bytes) }
+
+    private var tailBinding: Binding<Bool> {
+        let ids = Set(split.tail.map(\.id))
+        return Binding(
+            get: { !ids.isEmpty && ids.isSubset(of: scanner.selection) },
+            set: { isOn in
+                if isOn { scanner.selection.formUnion(ids) }
+                else { scanner.selection.subtract(ids) }
+            }
+        )
+    }
+
     /// Groups bucketed by where their bytes actually live, largest bucket first, with
     /// preferences-only leftovers pushed to the end regardless of count.
     private var sections: [OrphanSection] {
-        let preferencesOnly = scanner.orphans.filter(\.isPreferencesOnly)
-        let substantial = scanner.orphans.filter { !$0.isPreferencesOnly }
+        let preferencesOnly = split.major.filter(\.isPreferencesOnly)
+        let substantial = split.major.filter { !$0.isPreferencesOnly }
 
         var sections = Dictionary(grouping: substantial, by: \.primaryDomain)
             .map { OrphanSection(domain: $0.key, isPreferencesOnly: false, groups: $0.value) }
@@ -120,11 +156,64 @@ private struct SectionHeader: View {
     }
 }
 
+// MARK: - Tail
+
+/// The one row standing in for every orphan too small to rank visually.
+///
+/// Unlike the Cache Diet's equivalent this carries a checkbox, because the Orphan Hunt acts
+/// on a selection: "take all forty-three of the tiny ones" is a reasonable thing to want,
+/// and making the user expand the group to tick them individually would be busywork.
+private struct TailSummary: View {
+    let count: Int
+    let bytes: UInt64
+    @Binding var isExpanded: Bool
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Toggle(isOn: $isOn) { EmptyView() }
+                .labelsHidden()
+                .toggleStyle(.checkbox)
+                .accessibilityLabel("Select all \(count) smaller orphans")
+
+            Button {
+                withAnimation(.snappy(duration: 0.15)) { isExpanded.toggle() }
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "chevron.right")
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 18)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(count) smaller orphans")
+                            .font(.body.weight(.medium))
+                        Text("None above 1% of the total")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer(minLength: 12)
+
+                    Text(ByteFormat.string(bytes))
+                        .font(.body.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(isExpanded ? "Collapse" : "Expand to review them individually")
+        }
+        .padding(.vertical, 5)
+    }
+}
+
 // MARK: - Rows
 
 private struct OrphanRow: View {
     let group: OrphanGroup
-    let share: Double
+    /// `nil` inside the tail group, where a bar would carry no information.
+    let share: Double?
     @Binding var isOn: Bool
     @State private var isExpanded = false
 
@@ -152,13 +241,15 @@ private struct OrphanRow: View {
                     // A hairline bar ranks rows by size without adding a second number.
                     // Width-capped: stretched across the full text column it stops reading
                     // as a meter and starts reading as an underline.
-                    GeometryReader { geometry in
-                        Capsule()
-                            .fill(.tint)
-                            .frame(width: max(2, geometry.size.width * share), height: 3)
+                    if let share {
+                        GeometryReader { geometry in
+                            Capsule()
+                                .fill(.tint)
+                                .frame(width: max(2, geometry.size.width * share), height: 3)
+                        }
+                        .frame(maxWidth: 180, alignment: .leading)
+                        .frame(height: 3)
                     }
-                    .frame(maxWidth: 180, alignment: .leading)
-                    .frame(height: 3)
 
                     EvidenceChips(evidence: group.evidence, staleness: group.stalenessLabel)
                 }

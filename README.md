@@ -34,7 +34,7 @@ edit the `info:` and `entitlements:` blocks in `project.yml`, not those files.
 xcodebuild -project CruftCheck.xcodeproj -scheme CruftCheck -destination 'platform=macOS' test
 ```
 
-64 tests run against a synthetic `~/Library` built in a temp directory (`Tests/LibraryFixture.swift`),
+70 tests run against a synthetic `~/Library` built in a temp directory (`Tests/LibraryFixture.swift`),
 so the safety-critical paths are exercised without waiting for real cruft to accumulate.
 One test in `TrashServiceTests` genuinely moves a uniquely-named file to the Trash — that
 recoverability is the whole safety guarantee — and removes that exact item afterward.
@@ -93,6 +93,7 @@ CruftCheck/
 │   ├─ AppBundleIndex.swift       vendor prefixes of installed .app bundles
 │   ├─ CancellationFlag.swift
 │   ├─ FullDiskAccess.swift       probes the grant before a scan spends effort on it
+│   ├─ VolumeCapacity.swift       the denominator: prompt-free, unlike measuring ~/Library
 │   └─ TrashService.swift         the only code that removes anything
 ├─ ViewModels/ScannerViewModel.swift   @MainActor @Observable
 └─ Views/                         ContentView, OrphanHuntView, CacheDietView, FlowLayout

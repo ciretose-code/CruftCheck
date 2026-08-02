@@ -38,6 +38,8 @@ final class ScannerViewModel {
     /// Checked at the start of every scan. `.denied` means results are incomplete and
     /// nothing can be trashed, which the user needs to know before choosing anything.
     private(set) var diskAccess: FullDiskAccess.Status = .unknown
+    /// The volume's own numbers, so the reclaimable total has something to be a fraction of.
+    private(set) var capacity: VolumeCapacity?
 
     /// What to tell the user when items couldn't be moved, and what to offer them about it.
     struct TrashFailure {
@@ -108,6 +110,7 @@ final class ScannerViewModel {
             // Before the walk, not after it fails: one directory listing, and it decides
             // whether anything the scan finds can actually be acted on.
             self?.diskAccess = await Background.run { FullDiskAccess.status() }
+            self?.capacity = await Background.run { VolumeCapacity.current() }
 
             switch mode {
             case .orphanHunt: await self?.runOrphanHunt()

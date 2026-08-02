@@ -133,26 +133,11 @@ struct CacheEntry: Identifiable, Hashable, Sendable {
     var name: String { url.lastPathComponent }
 }
 
-/// Splits a size-sorted cache list into the rows a proportional bar can still speak about,
-/// and the tail it can't.
+/// The thresholds governing when a list stops drawing its tail row by row.
 ///
-/// A bar scaled to the largest row is the only scaling that means exactly what it looks like
-/// — but on a real machine the largest row is orders of magnitude above the median, so every
-/// row past the first few computes to a fraction of a point and renders as the same minimum
-/// stub. A list of twenty-six becomes three distinguishable rows and twenty-three identical
-/// ones.
-///
-/// The alternative fixes — log or gamma scaling — buy visibility by making length stop
-/// meaning size, which is the one question this list exists to answer. So the scale stays
-/// honest and the tail stops being drawn a row at a time instead.
-struct CacheListSplit {
-    /// Rows large enough that their bar length still carries information.
-    var major: [CacheEntry] = []
-    /// Everything below the threshold, shown behind one expandable summary row.
-    var tail: [CacheEntry] = []
-
-    var tailBytes: UInt64 { tail.reduce(0) { $0 + $1.bytes } }
-
+/// Non-generic so both modes share one set of numbers rather than each carrying its own
+/// copy — a row means the same thing in the Orphan Hunt as in the Cache Diet.
+enum TailSplitRule {
     /// Share of the total below which a row joins the tail.
     ///
     /// A share of the *total*, not of the largest row, because "under 1% of what you could
@@ -163,32 +148,61 @@ struct CacheListSplit {
     static let minimumMajorRows = 3
     /// Hiding a single row behind a disclosure costs a click and saves nothing.
     static let minimumTailRows = 2
+}
 
-    /// - Parameter entries: Sorted descending by size, as `LibraryScanner` returns them.
-    ///   The prefix scan below depends on that order.
-    init(entries: [CacheEntry]) {
-        let total = entries.reduce(0) { $0 + $1.bytes }
+/// Splits a size-sorted list into the rows a proportional bar can still speak about, and the
+/// tail it can't.
+///
+/// A bar scaled to the largest row is the only scaling that means exactly what it looks
+/// like — but on a real machine the largest row is orders of magnitude above the median, so
+/// every row past the first few computes to a fraction of a point and renders as the same
+/// minimum stub. Both modes hit this. A Cache Diet of twenty-six becomes three
+/// distinguishable rows and twenty-three identical ones; an Orphan Hunt where one identifier
+/// holds 91% of the bytes is worse still.
+///
+/// The alternative fixes — log or gamma scaling — buy visibility by making length stop
+/// meaning size, which is the one question these lists exist to answer. So the scale stays
+/// honest and the tail stops being drawn a row at a time instead.
+///
+/// Generic over the row type rather than over a protocol: the rule only needs to know each
+/// item's size, and a closure says that without either model type having to declare kinship
+/// with the other.
+struct TailSplit<Item> {
+    /// Rows large enough that their bar length still carries information.
+    var major: [Item] = []
+    /// Everything below the threshold, shown behind one expandable summary row.
+    var tail: [Item] = []
+    private(set) var tailBytes: UInt64 = 0
+
+    /// - Parameters:
+    ///   - items: Sorted descending by size, as `LibraryScanner` returns them. The prefix
+    ///     scan below depends on that order.
+    ///   - bytes: The size of one item.
+    init(_ items: [Item], bytes: (Item) -> UInt64) {
+        let sizes = items.map(bytes)
+        let total = sizes.reduce(UInt64(0)) { $0 &+ $1 }
 
         // No total means no shares to compare against; show everything rather than invent
         // a threshold.
         guard total > 0 else {
-            major = entries
+            major = items
             return
         }
 
-        let cutoff = Double(total) * Self.threshold
-        var majorCount = entries.prefix { Double($0.bytes) >= cutoff }.count
+        let cutoff = Double(total) * TailSplitRule.threshold
+        var majorCount = sizes.prefix { Double($0) >= cutoff }.count
 
         // A flat distribution can put every row under the threshold — two hundred equal
         // items are half a percent each — which would otherwise group the entire list.
-        majorCount = max(majorCount, min(Self.minimumMajorRows, entries.count))
+        majorCount = max(majorCount, min(TailSplitRule.minimumMajorRows, items.count))
 
-        if entries.count - majorCount < Self.minimumTailRows {
-            majorCount = entries.count
+        if items.count - majorCount < TailSplitRule.minimumTailRows {
+            majorCount = items.count
         }
 
-        major = Array(entries.prefix(majorCount))
-        tail = Array(entries.dropFirst(majorCount))
+        major = Array(items.prefix(majorCount))
+        tail = Array(items.dropFirst(majorCount))
+        tailBytes = sizes.dropFirst(majorCount).reduce(UInt64(0)) { $0 &+ $1 }
     }
 }
 

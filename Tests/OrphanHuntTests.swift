@@ -343,6 +343,37 @@ struct OrphanHuntTests {
         }
     }
 
+    // MARK: - Tail split
+    //
+    // The same rule as the Cache Diet's, over a different row type. The Orphan Hunt is the
+    // more extreme case: one identifier routinely holds most of the bytes.
+
+    @Test("The split works over orphan groups, not just cache entries")
+    func splitsOrphanGroups() {
+        // The real shape from the machine this was built against: 39.8 MB of 43.5 MB in one
+        // identifier, and everything from the third row down under 1% of the total.
+        let sizes: [UInt64] = [39_800_000, 2_100_000, 336_000, 319_000, 25_000, 4_000, 4_000, 4_000]
+        let groups = sizes.enumerated().map { index, bytes in
+            OrphanGroup(
+                bundleID: "com.dead.Ghost\(index)",
+                paths: [OrphanPath(
+                    url: URL(fileURLWithPath: "/tmp/ghost-\(index)"),
+                    domain: .applicationSupport,
+                    bytes: bytes
+                )]
+            )
+        }
+
+        let split = TailSplit(groups, bytes: \.bytes)
+
+        // Only two rows clear 1% of the 42.59 MB total (the cutoff is 425.9 kB, and the
+        // third row is 336 kB), but the minimum-rows floor keeps a third on screen rather
+        // than reducing the list to a pair and a lump.
+        #expect(split.major.count == TailSplitRule.minimumMajorRows)
+        #expect(split.tail.count == 5)
+        #expect(split.tailBytes == 356_000)
+    }
+
     // MARK: - Grouping
 
     @Test("Leftovers across domains collapse into one group with a summed size")

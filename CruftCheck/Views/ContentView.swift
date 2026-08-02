@@ -44,6 +44,10 @@ struct ContentView: View {
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+
+                if let capacity = scanner.capacity {
+                    CapacityBar(reclaimable: scanner.totalBytes, capacity: capacity)
+                }
             } else {
                 Text(scanner.mode.subtitle)
                     .font(.callout)
@@ -92,6 +96,59 @@ struct ContentView: View {
             case .cacheDiet:  CacheDietView(scanner: scanner)
             }
         }
+    }
+}
+
+// MARK: - Capacity
+
+/// The reclaimable total against the volume it would be reclaimed from.
+///
+/// The honest thing this shows is usually deflating: on a 494 GB disk, 2.34 GB of cache is
+/// half a percent. That's worth showing anyway — an app that quotes gigabytes without a
+/// denominator invites the reader to supply their own, and they'll supply a flattering one.
+///
+/// The reclaimable segment is floored at 3 pt, which makes it a locator rather than a
+/// measurement — at true scale it would be a third of a pixel. That's only acceptable
+/// because the caption states the amount *and* the percentage directly underneath, so the
+/// length is never the sole carrier of the fact. Where a length is the only signal — the
+/// row bars — it stays strictly proportional instead.
+private struct CapacityBar: View {
+    let reclaimable: UInt64
+    let capacity: VolumeCapacity
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            GeometryReader { geometry in
+                let width = geometry.size.width
+                let reclaimWidth = max(3, width * capacity.share(of: reclaimable))
+                let usedWidth = max(0, width * capacity.share(of: capacity.used) - reclaimWidth)
+
+                HStack(spacing: 1.5) {
+                    Rectangle().fill(.tint).frame(width: reclaimWidth)
+                    Rectangle().fill(.secondary).frame(width: usedWidth)
+                    Rectangle().fill(.quaternary)
+                }
+            }
+            .frame(height: 6)
+            .clipShape(Capsule())
+
+            Text(caption)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.top, 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(caption)
+    }
+
+    private var caption: String {
+        let share = capacity.share(of: reclaimable)
+        let percent = share < 0.01
+            ? "under 1%"
+            : (share * 100).formatted(.number.precision(.fractionLength(0...1))) + "%"
+
+        return "\(ByteFormat.string(reclaimable)) reclaimable — \(percent) of this "
+            + "\(ByteFormat.string(capacity.total)) disk · \(ByteFormat.string(capacity.available)) free"
     }
 }
 
