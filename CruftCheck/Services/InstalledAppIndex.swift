@@ -34,6 +34,31 @@ final class InstalledAppIndex {
         presence.isInstalled(bundleID)
     }
 
+    // MARK: - Running applications
+    //
+    // `AppBundleIndex` searches fixed roots, so it cannot see an app running from a disk
+    // image, ~/Downloads, or an external volume. Those are exactly the installations whose
+    // helpers get falsely flagged, because nothing in the standard locations shares their
+    // vendor prefix. Anything currently running is unambiguously present, wherever it lives.
+
+    static func runningAppIdentifiers() -> Set<String> {
+        Set(NSWorkspace.shared.runningApplications.compactMap { $0.bundleIdentifier?.lowercased() })
+    }
+
+    static func runningAppNames() -> Set<String> {
+        var names: Set<String> = []
+        for app in NSWorkspace.shared.runningApplications {
+            // The bundle's own file name, which is what a Library folder is named after.
+            if let url = app.bundleURL {
+                names.insert(url.deletingPathExtension().lastPathComponent)
+            }
+            if let localized = app.localizedName {
+                names.insert(localized)
+            }
+        }
+        return names
+    }
+
     private func resolves(_ bundleID: String) -> Bool {
         if let known = cache[bundleID] { return known }
 

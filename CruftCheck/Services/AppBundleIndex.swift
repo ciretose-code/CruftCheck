@@ -76,28 +76,44 @@ enum AppBundleIndex {
         return parts[0] + "." + parts[1]
     }
 
-    /// `.app` bundles one level down, plus one nested level so folders like
-    /// "/Applications/Adobe Photoshop 2024/Photoshop.app" are seen.
-    private static func appBundles(in directory: URL) -> [URL] {
-        let fileManager = FileManager.default
-        guard let entries = try? fileManager.contentsOfDirectory(
+    /// How far below a search root to look for `.app` bundles.
+    ///
+    /// Two levels missed real installations: Adobe nests as
+    /// `/Applications/Adobe Creative Cloud/Adobe Photoshop 2025/Photoshop.app`, and Setapp
+    /// keeps its catalogue under `/Applications/Setapp`. Missing an app means its helpers
+    /// look orphaned, so the cost of stopping too shallow is a false positive — the
+    /// expensive direction.
+    private static let searchDepth = 4
+
+    /// `.app` bundles beneath `directory`, to `searchDepth` levels.
+    ///
+    /// Not private so tests can point it at a synthetic tree — the real search roots are
+    /// whatever happens to be installed on the machine running the suite.
+    static func appBundles(in directory: URL, depth: Int = searchDepth) -> [URL] {
+        guard depth > 0 else { return [] }
+
+        guard let entries = try? FileManager.default.contentsOfDirectory(
             at: directory,
-            includingPropertiesForKeys: [.isDirectoryKey],
+            includingPropertiesForKeys: [.isDirectoryKey, .isSymbolicLinkKey],
             options: [.skipsHiddenFiles]
         ) else { return [] }
 
         var results: [URL] = []
         for entry in entries {
+            // An .app is itself a directory. Collect it and stop — recursing inside would
+            // find helper apps nested in Contents/, which aren't separately installed.
             if entry.pathExtension == "app" {
                 results.append(entry)
-            } else if (try? entry.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true {
-                let nested = (try? fileManager.contentsOfDirectory(
-                    at: entry,
-                    includingPropertiesForKeys: nil,
-                    options: [.skipsHiddenFiles]
-                )) ?? []
-                results.append(contentsOf: nested.filter { $0.pathExtension == "app" })
+                continue
             }
+
+            let values = try? entry.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
+            // Symlinks are skipped rather than followed: /Applications routinely holds
+            // links to other volumes, and following them risks both loops and long stalls
+            // on network mounts.
+            guard values?.isSymbolicLink != true, values?.isDirectory == true else { continue }
+
+            results.append(contentsOf: appBundles(in: entry, depth: depth - 1))
         }
         return results
     }

@@ -57,6 +57,7 @@
 		5A5C8FBE1A5A1EC0706ECD85 /* ScanMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanMode.swift; sourceTree = "<group>"; };
 		5C830DDA956C1442B96D66D6 /* OrphanHuntView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanHuntView.swift; sourceTree = "<group>"; };
 		5E376F339A759A5F6136C051 /* InstalledAppIndex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledAppIndex.swift; sourceTree = "<group>"; };
+		6566EEFCC32557E97677B33E /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 		6724ACB4C58951BF862DFB22 /* OrphanHuntTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanHuntTests.swift; sourceTree = "<group>"; };
 		759483F3D51746C827E9E2E5 /* AppPresence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPresence.swift; sourceTree = "<group>"; };
 		7837F7B26FC1433ECC4670EE /* LibraryScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryScanner.swift; sourceTree = "<group>"; };
@@ -93,6 +94,14 @@
 				5C830DDA956C1442B96D66D6 /* OrphanHuntView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		052DB3EFEDAAF5A189899A28 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				6566EEFCC32557E97677B33E /* Signing.xcconfig */,
+			);
+			path = Config;
 			sourceTree = "<group>";
 		};
 		14473C9DFE663161238D74F2 /* Products */ = {
@@ -154,6 +163,7 @@
 		B0214E1E46D9E71AAED4FA04 = {
 			isa = PBXGroup;
 			children = (
+				052DB3EFEDAAF5A189899A28 /* Config */,
 				A8F93199DBD59A38F9AD66A4 /* CruftCheck */,
 				882194D1A5DBD50B3B629350 /* Tests */,
 				14473C9DFE663161238D74F2 /* Products */,
@@ -226,12 +236,12 @@
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					3088352D0EC1B4E861131BFE = {
-						DevelopmentTeam = 6D39SX3E6V;
-						ProvisioningStyle = Automatic;
+						DevelopmentTeam = "";
+						ProvisioningStyle = Manual;
 					};
 					D07F165857211B96BEB395C7 = {
-						DevelopmentTeam = 6D39SX3E6V;
-						ProvisioningStyle = Automatic;
+						DevelopmentTeam = "";
+						ProvisioningStyle = Manual;
 					};
 				};
 			};
@@ -323,8 +333,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -342,6 +350,7 @@
 		};
 		5AA1F0B94FDAE0462DAFCFB6 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 6566EEFCC32557E97677B33E /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -377,7 +386,6 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 6D39SX3E6V;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -405,8 +413,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CruftCheck/CruftCheck.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -425,6 +431,7 @@
 		};
 		889868B6EFF1CFB61B73BB60 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 6566EEFCC32557E97677B33E /* Signing.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -460,7 +467,6 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 6D39SX3E6V;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -495,8 +501,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CruftCheck/CruftCheck.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -517,8 +521,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (

@@ -1,0 +1,25 @@
+// Signing defaults that let anyone build and test this project.
+//
+// Nothing here is specific to one developer or one Apple Developer account. Ad-hoc signing
+// ("Sign to Run Locally") needs no team, no certificate and no account, so a fresh clone —
+// or CI outside the team — can build and run the 93 tests without touching a setting.
+//
+// This matters more than usual for this app: the tests are the safety argument, and a
+// contributor who can't run them can't check their own work.
+
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = -
+DEVELOPMENT_TEAM =
+
+// Machine-local overrides, applied last so they win. The file is gitignored; a missing one
+// is not an error, which is the whole point of the `?`.
+//
+// To sign with your team, create Config/Signing.local.xcconfig containing:
+//
+//     CODE_SIGN_STYLE = Automatic
+//     CODE_SIGN_IDENTITY = Apple Development
+//     DEVELOPMENT_TEAM = <YOUR_TEAM_ID>
+//
+// Releases additionally need a Developer ID Application certificate — see Scripts/release.sh,
+// which reads DEVELOPMENT_TEAM back out of the resolved build settings.
+#include? "Signing.local.xcconfig"

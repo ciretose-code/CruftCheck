@@ -132,15 +132,24 @@ final class ScannerViewModel {
         selection.removeAll()
 
         let mode = mode
+        // Captured now, so this task keeps a reference to *its own* flag. Comparing it
+        // against `scanFlag` on the way back tells a superseded task that it has been
+        // replaced, whatever else has happened in between.
+        let flag = scanFlag
+
         scanTask = Task { [weak self] in
             // Before the walk, not after it fails: one directory listing, and it decides
             // whether anything the scan finds can actually be acted on.
-            self?.diskAccess = await Background.run { FullDiskAccess.status() }
-            self?.capacity = await Background.run { VolumeCapacity.current() }
+            let access = await Background.run { FullDiskAccess.status() }
+            let capacity = await Background.run { VolumeCapacity.current() }
+
+            guard let self, flag === self.scanFlag else { return }
+            self.diskAccess = access
+            self.capacity = capacity
 
             switch mode {
-            case .orphanHunt: await self?.runOrphanHunt()
-            case .cacheDiet:  await self?.runCacheDiet()
+            case .orphanHunt: await self.runOrphanHunt()
+            case .cacheDiet:  await self.runCacheDiet()
             }
         }
     }
@@ -159,7 +168,15 @@ final class ScannerViewModel {
         // Phase 1 — background: shallow listing, identifier extraction, and the app-bundle
         // sweep that tells us which vendors are still installed.
         let candidates = await Background.run { LibraryScanner.collectOrphanCandidates() }
-        let vendors = await Background.run { AppBundleIndex.vendorPrefixes(of: AppBundleIndex.installedIdentifiers()) }
+        let onDisk = await Background.run { AppBundleIndex.installedIdentifiers() }
+        guard !flag.isCancelled else { return finishCancelled(flag) }
+
+        // Running applications are folded in before the vendor prefixes are derived. An app
+        // launched from a disk image or ~/Downloads is in no search root, so without this
+        // its XPC services and helpers have no installed vendor to match and are flagged.
+        let vendors = AppBundleIndex.vendorPrefixes(
+            of: onDisk.union(InstalledAppIndex.runningAppIdentifiers())
+        )
         guard !flag.isCancelled else { return finishCancelled(flag) }
 
         // Phase 2 — main actor: LaunchServices lookups. Cheap and AppKit-bound.
@@ -183,12 +200,18 @@ final class ScannerViewModel {
         let flag = scanFlag
         let report = progressReporter(flag)
 
-        // Pure Foundation, so unlike the Orphan Hunt's LaunchServices step this needs no
-        // main-actor hop.
-        installedNames = await Background.run {
-            let installed = AppBundleIndex.installed()
-            return InstalledAppNames(appNames: installed.names, identifiers: installed.identifiers)
-        }
+        let discovered = await Background.run { AppBundleIndex.installed() }
+        guard flag === scanFlag else { return }
+
+        // Running applications are the one source that finds an app wherever it lives —
+        // a disk image, ~/Downloads, an external volume — none of which AppBundleIndex
+        // searches. Main-actor bound, and cheap.
+        let names = InstalledAppNames(
+            appNames: discovered.names.union(InstalledAppIndex.runningAppNames()),
+            identifiers: discovered.identifiers.union(InstalledAppIndex.runningAppIdentifiers())
+        )
+        guard flag === scanFlag else { return }
+        installedNames = names
 
         let result = await Background.run {
             LibraryScanner.scanCaches(isCancelled: { flag.isCancelled }, onProgress: report)

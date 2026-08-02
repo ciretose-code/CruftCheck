@@ -18,7 +18,14 @@ settings:
     DEAD_CODE_STRIPPING: YES
     STRING_CATALOG_GENERATE_SYMBOLS: YES
     ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOL_EXTENSIONS: YES
-    DEVELOPMENT_TEAM: 6D39SX3E6V
+
+# Signing lives in an xcconfig rather than here, so this file stays free of any one
+# developer's team. The committed defaults sign ad-hoc, which needs no account — a fresh
+# clone builds and tests without configuration. Config/Signing.local.xcconfig, gitignored,
+# supplies a real team where there is one.
+configFiles:
+  Debug: Config/Signing.xcconfig
+  Release: Config/Signing.xcconfig
 
 targets:
   CruftCheck:
@@ -65,18 +72,15 @@ targets:
         # Names the Icon Composer document in CruftCheck/AppIcon.icon. Without it the
         # build produces an app with the generic blank icon and no warning.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        # Both configurations build with a development identity. Developer ID signing
-        # happens at *export*, not at build: Scripts/ExportOptions.plist sets
-        # method=developer-id, and xcodebuild -exportArchive re-signs the archived app
-        # with the Developer ID certificate on the way out.
+        # No CODE_SIGN_* here: a target-level value beats the xcconfig, which would defeat
+        # the point of putting signing there. Both configurations build with whatever
+        # identity Config/Signing.xcconfig resolves to.
         #
-        # Forcing CODE_SIGN_IDENTITY to "Developer ID Application" on Release instead is
-        # the thing Xcode's "Switch to Development Signing" recommendation exists to undo,
-        # so it reappears as a pending change every time the project is opened. The export
-        # step is where the identity is verified — see release.sh, which fails if the
-        # exported app is not Developer ID signed.
-        CODE_SIGN_IDENTITY: "Apple Development"
-        CODE_SIGN_STYLE: Automatic
+        # Developer ID signing happens at *export*, not at build — release.sh generates
+        # export options with method=developer-id, and xcodebuild -exportArchive re-signs
+        # the archived app on the way out. Pinning Release to "Developer ID Application"
+        # instead is what Xcode's "Switch to Development Signing" recommendation exists to
+        # undo, so it reappears as a pending change on every open.
         COMBINE_HIDPI_IMAGES: YES
         ENABLE_USER_SCRIPT_SANDBOXING: NO
 
@@ -96,10 +100,8 @@ targets:
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete
         GENERATE_INFOPLIST_FILE: YES
-        # DEVELOPMENT_TEAM is inherited from the project, not restated here — that's
-        # Xcode's "Inherit Development Team from Project Settings" recommendation.
-        CODE_SIGN_IDENTITY: "Apple Development"
-        CODE_SIGN_STYLE: Automatic
+        # Signing is inherited from the project's xcconfig — both "Inherit Development Team
+        # from Project Settings" and the reason it isn't restated here.
 
 schemes:
   CruftCheck:

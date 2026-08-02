@@ -34,7 +34,7 @@ edit the `info:` and `entitlements:` blocks in `project.yml`, not those files.
 xcodebuild -project CruftCheck.xcodeproj -scheme CruftCheck -destination 'platform=macOS' test
 ```
 
-83 tests run against a synthetic `~/Library` built in a temp directory (`Tests/LibraryFixture.swift`),
+93 tests run against a synthetic `~/Library` built in a temp directory (`Tests/LibraryFixture.swift`),
 so the safety-critical paths are exercised without waiting for real cruft to accumulate.
 One test in `TrashServiceTests` genuinely moves a uniquely-named file to the Trash — that
 recoverability is the whole safety guarantee — and removes that exact item afterward.
@@ -72,11 +72,30 @@ The script edits `MARKETING_VERSION`, `CFBundleShortVersionString` and `CFBundle
 `project.yml`, regenerates, then reads the values back out of the generated `Info.plist` to
 confirm they took.
 
-**Both configurations build with `Apple Development`.** Developer ID signing happens at
-*export*, not at build: `ExportOptions.plist` sets `method: developer-id`, and
-`xcodebuild -exportArchive` re-signs the archived app with the distribution certificate on
-the way out. `release.sh` fails if the exported app isn't Developer ID signed, which is the
-check that matters.
+**Signing is not in `project.yml`.** It lives in `Config/Signing.xcconfig`, whose committed
+defaults sign ad-hoc — no team, no certificate, no Apple account — so a fresh clone or CI
+outside the team builds and runs the full suite without configuring anything. That matters
+more than usual here: the tests *are* the safety argument, and a contributor who can't run
+them can't check their own work.
+
+To sign with a team, create `Config/Signing.local.xcconfig` (gitignored):
+
+```
+CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = Apple Development
+DEVELOPMENT_TEAM = <YOUR_TEAM_ID>
+```
+
+The xcconfig pulls it in with `#include?`, so its absence isn't an error. Nothing may set
+`CODE_SIGN_*` in `project.yml` — a target-level value outranks an xcconfig and would defeat
+the arrangement.
+
+**Developer ID signing happens at export, not at build.** `release.sh` reads
+`DEVELOPMENT_TEAM` back out of the resolved build settings and generates export options
+from it, so no team identifier is committed anywhere; `xcodebuild -exportArchive` re-signs
+the archived app with the distribution certificate on the way out. The script fails if the
+exported app isn't Developer ID signed, which is the check that matters — it tests the
+artefact that actually ships.
 
 Pinning `CODE_SIGN_IDENTITY` to `Developer ID Application` on Release instead is precisely
 what Xcode's "Switch to Development Signing" recommendation exists to undo, so it comes back

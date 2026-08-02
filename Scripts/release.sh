@@ -25,7 +25,7 @@ set -euo pipefail
 SCHEME="CruftCheck"
 PROJECT="CruftCheck.xcodeproj"
 PROJECT_YML="project.yml"
-EXPORT_OPTIONS="Scripts/ExportOptions.plist"
+EXPORT_OPTIONS="build/ExportOptions.plist"   # generated; see "Export options" below
 APP_NAME="CruftCheck"
 NOTARY_PROFILE="${NOTARY_PROFILE:-cruftcheck-notary}"
 RELEASE_BRANCH="main"
@@ -84,8 +84,19 @@ REMOTE=$(git rev-parse "origin/${RELEASE_BRANCH}")
 if ! security find-identity -v -p codesigning | grep -q "Developer ID Application"; then
   die "no 'Developer ID Application' certificate in the keychain.
        Xcode › Settings › Accounts › Manage Certificates › + › Developer ID Application.
-       Requires the Account Holder or an Admin on team 6D39SX3E6V."
+       Requires the Account Holder or an Admin on the team."
 fi
+
+# The team is read back out of the resolved build settings rather than written down here.
+# Config/Signing.xcconfig ships with no team so a fresh clone can build and test; a release
+# needs a real one, which comes from the gitignored Config/Signing.local.xcconfig.
+TEAM_ID=$(xcodebuild -project "$PROJECT" -scheme "$SCHEME" -showBuildSettings 2>/dev/null \
+  | awk '/[[:space:]]DEVELOPMENT_TEAM = /{print $3; exit}')
+[ -n "${TEAM_ID:-}" ] || die "DEVELOPMENT_TEAM is empty.
+       Releases need a real team. Create Config/Signing.local.xcconfig with:
+         CODE_SIGN_STYLE = Automatic
+         CODE_SIGN_IDENTITY = Apple Development
+         DEVELOPMENT_TEAM = <YOUR_TEAM_ID>"
 
 if [ "$DRY_RUN" = false ]; then
   xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" >/dev/null 2>&1 || die \
@@ -95,7 +106,7 @@ if [ "$DRY_RUN" = false ]; then
 fi
 
 echo "  branch ${BRANCH}, tree clean, in sync with origin"
-echo "  Developer ID certificate present"
+echo "  Developer ID certificate present, team ${TEAM_ID}"
 
 # ── 2. Version ─────────────────────────────────────────────────────────────────
 # project.yml is the source of truth, not project.pbxproj. agvtool writes to the pbxproj,
@@ -163,7 +174,23 @@ xcodebuild archive \
 [ -d "$ARCHIVE_PATH" ] || die "archive not produced"
 
 # ── 5. Export ──────────────────────────────────────────────────────────────────
-step "Exporting (Developer ID)"
+# Export options are generated rather than committed, so the repository carries no team
+# identifier at all. Distribution is outside the Mac App Store — the App Sandbox is off by
+# design — which makes developer-id the only applicable method.
+step "Exporting (Developer ID, team ${TEAM_ID})"
+cat > "$EXPORT_OPTIONS" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key><string>developer-id</string>
+    <key>teamID</key><string>${TEAM_ID}</string>
+    <key>signingStyle</key><string>automatic</string>
+    <key>stripSwiftSymbols</key><true/>
+</dict>
+</plist>
+PLIST
+
 xcodebuild -exportArchive \
   -archivePath "$ARCHIVE_PATH" \
   -exportPath "$EXPORT_PATH" \
