@@ -39,7 +39,7 @@ targets:
         CFBundleName: Cruft/Check
         CFBundleDisplayName: Cruft/Check
         CFBundleShortVersionString: "0.1"
-        CFBundleVersion: "1"
+        CFBundleVersion: "2"
         LSApplicationCategoryType: public.app-category.utilities
         LSMinimumSystemVersion: "14.0"
         NSHumanReadableCopyright: ""
