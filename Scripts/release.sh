@@ -315,6 +315,13 @@ xcrun stapler validate "$DMG_PATH"
 # The real test: what Gatekeeper says about the app a user would actually launch.
 spctl --assess --type execute --verbose=2 "$APP_PATH" 2>&1 | tail -2
 
+# Publish the checksum beside the DMG so downloaders and Hash/Check can verify the exact
+# image that was notarized and stapled above.
+step "Calculating SHA-256"
+CHECKSUM_PATH="${DMG_PATH}.sha256"
+shasum -a 256 "$DMG_PATH" > "$CHECKSUM_PATH"
+echo "  ${CHECKSUM_PATH}"
+
 # ── 10. Commit the bump, then tag it ───────────────────────────────────────────
 # Committing before publishing means the tag points at the commit that declares the
 # version it claims, rather than at the one before it.
@@ -326,6 +333,7 @@ git push -q origin "$RELEASE_BRANCH"
 step "Publishing GitHub release"
 gh release create "$TAG" \
   "$DMG_PATH" \
+  "$CHECKSUM_PATH" \
   --title "${APP_NAME} ${VERSION}" \
   --generate-notes
 
