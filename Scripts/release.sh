@@ -319,7 +319,8 @@ spctl --assess --type execute --verbose=2 "$APP_PATH" 2>&1 | tail -2
 # image that was notarized and stapled above.
 step "Calculating SHA-256"
 CHECKSUM_PATH="${DMG_PATH}.sha256"
-shasum -a 256 "$DMG_PATH" > "$CHECKSUM_PATH"
+CHECKSUM=$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')
+printf '%s  %s\n' "$CHECKSUM" "$(basename "$DMG_PATH")" > "$CHECKSUM_PATH"
 echo "  ${CHECKSUM_PATH}"
 
 # ── 10. Commit the bump, then tag it ───────────────────────────────────────────
@@ -335,6 +336,7 @@ gh release create "$TAG" \
   "$DMG_PATH" \
   "$CHECKSUM_PATH" \
   --title "${APP_NAME} ${VERSION}" \
+  --notes "SHA-256: ${CHECKSUM}" \
   --generate-notes
 
 echo ""
