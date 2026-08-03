@@ -220,7 +220,28 @@ grep -q "Developer ID Application" <<<"$CS_INFO" \
 
 echo "  signed, hardened runtime on"
 
-# ── 7. DMG with drag-to-Applications layout ────────────────────────────────────
+# ── 7. Notarize the app before it goes into the DMG ────────────────────────────
+# Stapling only the DMG leaves the installed copy without a ticket: the ticket lives on
+# the disk image, and the user drags the bundle out of it. Gatekeeper then has to ask
+# Apple on first launch, which is a failure on a machine that is offline. The app must
+# therefore be stapled before it is copied into the image, which means notarizing it on
+# its own first — the DMG built from an already-stapled app is a different file, so the
+# image needs its own submission afterwards either way.
+if [ "$DRY_RUN" = false ]; then
+  step "Notarizing the app (takes a few minutes)"
+  APP_ZIP="build/${APP_NAME}-app.zip"
+  rm -f "$APP_ZIP"
+  ditto -c -k --keepParent "$APP_PATH" "$APP_ZIP"
+  xcrun notarytool submit "$APP_ZIP" --keychain-profile "$NOTARY_PROFILE" --wait
+  rm -f "$APP_ZIP"
+
+  step "Stapling the app"
+  xcrun stapler staple "$APP_PATH"
+  xcrun stapler validate "$APP_PATH" \
+    || die "the app has no stapled ticket — it would not launch offline"
+fi
+
+# ── 8. DMG with drag-to-Applications layout ────────────────────────────────────
 step "Creating DMG"
 APP_BUNDLE=$(basename "$APP_PATH")
 rm -f "$STAGING_DMG"
@@ -283,18 +304,18 @@ if [ "$DRY_RUN" = true ]; then
   exit 0
 fi
 
-# ── 8. Notarize, staple, verify ────────────────────────────────────────────────
-step "Notarizing (takes a few minutes)"
+# ── 9. Notarize the image, staple, verify ──────────────────────────────────────
+step "Notarizing the DMG (takes a few minutes)"
 xcrun notarytool submit "$DMG_PATH" --keychain-profile "$NOTARY_PROFILE" --wait
 
-step "Stapling"
+step "Stapling the DMG"
 xcrun stapler staple "$DMG_PATH"
 xcrun stapler validate "$DMG_PATH"
 
 # The real test: what Gatekeeper says about the app a user would actually launch.
 spctl --assess --type execute --verbose=2 "$APP_PATH" 2>&1 | tail -2
 
-# ── 9. Commit the bump, then tag it ────────────────────────────────────────────
+# ── 10. Commit the bump, then tag it ───────────────────────────────────────────
 # Committing before publishing means the tag points at the commit that declares the
 # version it claims, rather than at the one before it.
 step "Committing ${TAG}"
