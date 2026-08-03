@@ -2,7 +2,7 @@
 //
 // Nothing here is specific to one developer or one Apple Developer account. Ad-hoc signing
 // ("Sign to Run Locally") needs no team, no certificate and no account, so a fresh clone —
-// or CI outside the team — can build and run the 93 tests without touching a setting.
+// or CI outside the team — can build and run the 94 tests without touching a setting.
 //
 // This matters more than usual for this app: the tests are the safety argument, and a
 // contributor who can't run them can't check their own work.

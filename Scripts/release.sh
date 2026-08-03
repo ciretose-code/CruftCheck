@@ -205,10 +205,17 @@ APP_PATH=$(find "$EXPORT_PATH" -maxdepth 1 -name "*.app" | head -1)
 step "Verifying signature"
 codesign --verify --deep --strict --verbose=2 "$APP_PATH" 2>&1 | tail -2
 
-codesign -dv --verbose=4 "$APP_PATH" 2>&1 | grep -qE "flags=.*runtime" \
+# Read the signature once and assert on the text, so that codesign failing to read the
+# bundle at all reports itself as that, rather than as a missing hardened runtime — a
+# grep that finds nothing looks identical either way, and blames the artefact wrongly.
+CS_INFO=$(codesign -dv --verbose=4 "$APP_PATH" 2>&1) \
+  || die "codesign could not read ${APP_PATH}:
+${CS_INFO}"
+
+grep -qE "flags=.*runtime" <<<"$CS_INFO" \
   || die "hardened runtime is not enabled — notarization will reject this"
 
-codesign -dv "$APP_PATH" 2>&1 | grep -q "Developer ID Application" \
+grep -q "Developer ID Application" <<<"$CS_INFO" \
   || die "app is not signed with Developer ID Application"
 
 echo "  signed, hardened runtime on"
