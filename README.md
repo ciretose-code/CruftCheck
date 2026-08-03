@@ -28,6 +28,10 @@ xcodegen generate
 `CruftCheck/Info.plist` and `CruftCheck/CruftCheck.entitlements` are generated the same way —
 edit the `info:` and `entitlements:` blocks in `project.yml`, not those files.
 
+`project.yml` mirrors Xcode's recommended project settings, including `options.xcodeVersion`.
+Keep it that way. If Xcode offers to update project settings when you open it, decline:
+accepting edits the generated project, and the next `xcodegen generate` discards those edits.
+
 ## Tests
 
 ```sh
@@ -39,40 +43,9 @@ so the safety-critical paths are exercised without waiting for real cruft to acc
 One test in `TrashServiceTests` genuinely moves a uniquely-named file to the Trash — that
 recoverability is the whole safety guarantee — and removes that exact item afterward.
 
-## Releasing
+## Signing
 
-```sh
-./Scripts/release.sh              # bump the build number, keep the version
-./Scripts/release.sh 0.2          # set the version to 0.2 and bump the build
-./Scripts/release.sh --dry-run    # build, sign and package; publish nothing
-```
-
-The script tests, archives, exports with Developer ID, builds a drag-to-Applications DMG,
-notarizes and staples it, commits the version bump, and publishes a GitHub release.
-
-Two prerequisites, both one-time:
-
-```sh
-# 1. A Developer ID Application certificate in the login keychain.
-#    Xcode › Settings › Accounts › Manage Certificates › + › Developer ID Application
-#    An "Apple Development" certificate cannot be notarized.
-
-# 2. Notary credentials, stored in the keychain
-xcrun notarytool store-credentials "cruftcheck-notary" \
-  --key ~/.private_keys/AuthKey_<KEY_ID>.p8 --key-id <KEY_ID> --issuer <ISSUER_ID>
-```
-
-Both are verified in preflight, along with a clean tree on `main` in sync with `origin`,
-before anything slow runs — a missing certificate should cost a second, not a full archive.
-Set `NOTARY_PROFILE=<name>` to reuse credentials stored under another name.
-
-**The version lives in `project.yml`, not in `project.pbxproj`.** `agvtool` writes to the
-pbxproj, which the next `xcodegen generate` overwrites, so the bump would silently vanish.
-The script edits `MARKETING_VERSION`, `CFBundleShortVersionString` and `CFBundleVersion` in
-`project.yml`, regenerates, then reads the values back out of the generated `Info.plist` to
-confirm they took.
-
-**Signing is not in `project.yml`.** It lives in `Config/Signing.xcconfig`, whose committed
+Signing is configured in `Config/Signing.xcconfig`, not in `project.yml`. Its committed
 defaults sign ad-hoc — no team, no certificate, no Apple account — so a fresh clone or CI
 outside the team builds and runs the full suite without configuring anything. That matters
 more than usual here: the tests *are* the safety argument, and a contributor who can't run
@@ -86,24 +59,58 @@ CODE_SIGN_IDENTITY = Apple Development
 DEVELOPMENT_TEAM = <YOUR_TEAM_ID>
 ```
 
-The xcconfig pulls it in with `#include?`, so its absence isn't an error. Nothing may set
-`CODE_SIGN_*` in `project.yml` — a target-level value outranks an xcconfig and would defeat
-the arrangement.
+The xcconfig pulls it in with `#include?`, so its absence isn't an error.
 
-**Developer ID signing happens at export, not at build.** `release.sh` reads
-`DEVELOPMENT_TEAM` back out of the resolved build settings and generates export options
-from it, so no team identifier is committed anywhere; `xcodebuild -exportArchive` re-signs
-the archived app with the distribution certificate on the way out. The script fails if the
-exported app isn't Developer ID signed, which is the check that matters — it tests the
-artefact that actually ships.
+**Nothing may set `CODE_SIGN_*` in `project.yml`.** A target-level value outranks an xcconfig
+and would defeat the arrangement.
 
-Pinning `CODE_SIGN_IDENTITY` to `Developer ID Application` on Release instead is precisely
-what Xcode's "Switch to Development Signing" recommendation exists to undo, so it comes back
-as a pending project change every time the project is opened. `project.yml` therefore
-matches Xcode's recommended settings exactly — including `LastUpgradeCheck` via
-`options.xcodeVersion`, which XCodeGen otherwise stamps at 1430 and which alone makes Xcode
-offer the upgrade dialog on every open. Accepting that dialog edits the generated project,
-which the next `xcodegen generate` discards, so the two must agree.
+## Releasing
+
+```sh
+./Scripts/release.sh              # bump the build number, keep the version
+./Scripts/release.sh 0.2          # set the version to 0.2 and bump the build
+./Scripts/release.sh --dry-run    # build, sign and package; publish nothing
+```
+
+The script tests, archives, exports with Developer ID, notarizes and staples the app, packs
+it into a drag-to-Applications DMG, notarizes and staples that too, commits the version bump,
+and publishes a GitHub release.
+
+**The app and the image are notarized separately, and both waits are real.** A ticket stapled
+to the DMG covers the download but not the copy the user drags to `/Applications`, which would
+leave Gatekeeper needing to reach Apple on first launch — a failure offline. Stapling the app
+must therefore happen before it is copied into the image, and the resulting image is a
+different file that needs its own submission. Expect two notarization round trips.
+
+Two prerequisites, both one-time:
+
+```sh
+# 1. A Developer ID Application certificate in the login keychain.
+#    Xcode › Settings › Accounts › Manage Certificates › + › Developer ID Application
+#    An "Apple Development" certificate cannot be notarized.
+
+# 2. Notary credentials, stored in the keychain
+xcrun notarytool store-credentials "cruftcheck-notary" \
+  --key ~/.private_keys/AuthKey_<KEY_ID>.p8 --key-id <KEY_ID> --issuer <ISSUER_ID>
+```
+
+Preflight verifies both, along with a clean tree on `main` in sync with `origin`, before
+anything slow runs — a missing certificate should cost a second, not a full archive. Set
+`NOTARY_PROFILE=<name>` to reuse credentials stored under another name. A dry run leaves the
+version bump in the working tree; revert it with `git checkout project.yml && xcodegen generate`.
+
+**The version lives in `project.yml`, not in `project.pbxproj`.** Don't reach for `agvtool`:
+it writes to the pbxproj, which the next `xcodegen generate` overwrites, so the bump would
+silently disappear. The script edits `MARKETING_VERSION`, `CFBundleShortVersionString` and
+`CFBundleVersion` in `project.yml`, regenerates, then reads the values back out of the
+generated `Info.plist` to confirm they took.
+
+**Developer ID signing happens at export, not at build.** The script reads `DEVELOPMENT_TEAM`
+back out of the resolved build settings and generates export options from it, so no team
+identifier is committed anywhere; `xcodebuild -exportArchive` re-signs the archived app with
+the distribution certificate on the way out. The script fails if the exported app isn't
+Developer ID signed, which is the check that matters — it tests the artefact that actually
+ships.
 
 ## Safety model
 
@@ -120,8 +127,8 @@ The app is deliberately biased toward doing nothing:
 - **The verdict shows its work.** `AppPresence.verdict(for:)` returns the checks that
   declined to claim an identifier, not a bare `Bool`, and every row in the Orphan Hunt
   displays them. Caution the user can't see is caution they have to take on faith. The
-  clause order short-circuits exactly as before, so recording evidence can never change a
-  verdict — `isInstalled` is now a wrapper over `verdict(for:)`.
+  clause order short-circuits, so recording evidence can never change a verdict;
+  `isInstalled` is a wrapper over `verdict(for:)`.
 - **An action that frees nothing never looks like one that does.** Zero-byte caches are
   partitioned out of the Cache Diet list — a row that can't free anything can't help you
   choose — and counted in the header instead. They can be trashed via "Tidy N Empty
@@ -141,7 +148,7 @@ The app is deliberately biased toward doing nothing:
   app names — but only to *withhold* a Cache Diet badge, never to flag anything. Its rules
   are deliberately over-generous, and an empty index claims everything, so a failed bundle
   sweep reads as "no evidence" rather than "nothing is installed".
-  Human-named folders in `Application Support` remain out of scope: that is where apps keep
+  Human-named folders in `Application Support` are out of scope: that is where apps keep
   data that exists nowhere else, and an app run from a disk image is indistinguishable from
   a departed one.
 - **System paths are excluded before they are opened**, not merely disabled in the UI.
