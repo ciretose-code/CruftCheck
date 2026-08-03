@@ -7,6 +7,19 @@ Trash. Two modes, native SwiftUI, no background agent, no subscription.
   are no longer installed.
 - **The Cache Diet** — cache and log directories for apps you still use, largest first.
 
+## Install
+
+1. Download the DMG from the [latest release](https://github.com/ciretose-code/CruftCheck/releases/latest).
+2. Open it and drag **Cruft/Check** to Applications.
+3. Launch it, then grant it Full Disk Access when asked — System Settings › Privacy &
+   Security › Full Disk Access. Without that grant the scans see only part of `~/Library`.
+
+macOS 14 or later. The app is signed with a Developer ID and notarized by Apple, so it opens
+without a Gatekeeper warning and needs no right-click-to-open workaround.
+
+Nothing is ever deleted permanently: everything Cruft/Check removes goes to the Trash, where
+you can put it back. See [Safety model](#safety-model) for what that guarantee rests on.
+
 ## Requirements
 
 macOS 14+, Xcode 26+. `xcodegen` is only needed if you change `project.yml`.
@@ -212,3 +225,7 @@ When a removal is refused anyway, `TrashService.Failure` separates "macOS said n
 safety list said no". Only the first is fixable, so only the first offers System Settings —
 and it also offers Finder, which holds privileges this app doesn't and can move the item to
 the Trash without the grant or a relaunch.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
