@@ -12,14 +12,24 @@ import Foundation
 /// There is no API to query TCC. The only way to know is to attempt a read and see.
 enum FullDiskAccess {
 
-    /// A directory readable only with Full Disk Access, present on every Mac.
+    /// Directories readable only with Full Disk Access, in the order they are tried. The first
+    /// one that exists decides the answer.
     ///
-    /// Chosen because it fails *silently*. The purpose-limited directories — Music, Photos,
+    /// Chosen because they fail *silently*. The purpose-limited directories — Music, Photos,
     /// Calendars — would also prove the point, but asking raises a consent dialog, which is
     /// the exact prompt `LibraryPaths` exists to keep the app from triggering.
-    private static var probe: URL {
-        FileManager.default.homeDirectoryForCurrentUser
-            .appending(path: "Library/Application Support/com.apple.TCC", directoryHint: .isDirectory)
+    ///
+    /// A list rather than one path because the OS has already taken a probe away: macOS 27
+    /// no longer lets apps see `~/Library/Application Support/com.apple.TCC`, which left the
+    /// check answering `.unknown` on every run and the banner never showing. Safari's data
+    /// directory is present on every Mac; the TCC directory stays as a fallback for systems
+    /// where Safari's has been removed by hand.
+    static var probes: [URL] {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        return [
+            home.appending(path: "Library/Safari", directoryHint: .isDirectory),
+            home.appending(path: "Library/Application Support/com.apple.TCC", directoryHint: .isDirectory),
+        ]
     }
 
     enum Status: Equatable, Sendable {
@@ -32,9 +42,9 @@ enum FullDiskAccess {
     }
 
     /// Synchronous and cheap: one directory listing. Safe for `Background.run`.
-    static func status() -> Status {
-        let path = probe.path(percentEncoded: false)
-        guard FileManager.default.fileExists(atPath: path) else { return .unknown }
+    static func status(probes: [URL] = probes) -> Status {
+        let paths = probes.map { $0.path(percentEncoded: false) }
+        guard let path = paths.first(where: { FileManager.default.fileExists(atPath: $0) }) else { return .unknown }
         return (try? FileManager.default.contentsOfDirectory(atPath: path)) != nil ? .granted : .denied
     }
 
