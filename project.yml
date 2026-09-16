@@ -8,7 +8,7 @@ options:
   # "update to recommended settings" on every open no matter how current the
   # settings actually are — and accepting that offer edits the generated project,
   # which the next generate discards.
-  xcodeVersion: "26.5"
+  xcodeVersion: "27.0"
 
 # Project-level, so both targets inherit one copy. Xcode's recommended-settings
 # check asks for these at the project level specifically, and it keeps asking if
