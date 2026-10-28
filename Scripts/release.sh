@@ -3,13 +3,17 @@
 #
 # One-time credential setup (stored in the keychain, never repeated):
 #   xcrun notarytool store-credentials "cruftcheck-notary" \
-#     --key ~/.private_keys/AuthKey_<KEY_ID>.p8 \
+#     --key ~/Code/.private_keys/AuthKey_<KEY_ID>.p8 \
 #     --key-id <KEY_ID> \
 #     --issuer <ISSUER_ID>
 #
 # You also need a "Developer ID Application" certificate in the login keychain. An
 # "Apple Development" certificate is not enough — it can't be notarized, and Gatekeeper
 # will refuse the result on any Mac but this one.
+#
+# Release signing (Hash/Check): minisign secret key at
+#   ~/Code/.private_keys/ciretose.key
+# Override with MINISIGN_SECRET_KEY if needed. Signing prompts for the key password.
 #
 # Usage:
 #   ./Scripts/release.sh              # bump the build number, keep the version
@@ -18,6 +22,7 @@
 #
 # Env:
 #   NOTARY_PROFILE=eyeballs-notary ./Scripts/release.sh   # reuse another project's creds
+#   MINISIGN_SECRET_KEY=/path/to/ciretose.key ./Scripts/release.sh
 #
 set -euo pipefail
 
@@ -28,6 +33,7 @@ PROJECT_YML="project.yml"
 EXPORT_OPTIONS="build/ExportOptions.plist"   # generated; see "Export options" below
 APP_NAME="CruftCheck"
 NOTARY_PROFILE="${NOTARY_PROFILE:-cruftcheck-notary}"
+MINISIGN_SECRET_KEY="${MINISIGN_SECRET_KEY:-$HOME/Code/.private_keys/ciretose.key}"
 RELEASE_BRANCH="main"
 
 ARCHIVE_PATH="build/${SCHEME}.xcarchive"
@@ -65,9 +71,11 @@ cd "$(dirname "$0")/.."
 # discovering a missing certificate afterwards wastes all of them.
 step "Preflight"
 
-for tool in xcodegen gh xcrun hdiutil; do
+for tool in xcodegen gh xcrun hdiutil minisign; do
   command -v "$tool" >/dev/null || die "${tool} is not installed"
 done
+
+[ -f "$MINISIGN_SECRET_KEY" ] || die "minisign secret key not found: ${MINISIGN_SECRET_KEY}"
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 [ "$BRANCH" = "$RELEASE_BRANCH" ] || die "on branch ${BRANCH}, expected ${RELEASE_BRANCH}"
@@ -315,13 +323,19 @@ xcrun stapler validate "$DMG_PATH"
 # The real test: what Gatekeeper says about the app a user would actually launch.
 spctl --assess --type execute --verbose=2 "$APP_PATH" 2>&1 | tail -2
 
-# Publish the checksum beside the DMG so downloaders and Hash/Check can verify the exact
+# Publish a signed checksum list beside the DMG so Hash/Check can verify the exact
 # image that was notarized and stapled above.
-step "Calculating SHA-256"
-CHECKSUM_PATH="${DMG_PATH}.sha256"
-CHECKSUM=$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')
-printf '%s  %s\n' "$CHECKSUM" "$(basename "$DMG_PATH")" > "$CHECKSUM_PATH"
-echo "  ${CHECKSUM_PATH}"
+step "Signing SHA256SUMS with minisign"
+SUMS_PATH="build/SHA256SUMS"
+(
+  cd "$(dirname "$DMG_PATH")"
+  shasum -a 256 "$(basename "$DMG_PATH")"
+) > "$SUMS_PATH"
+minisign -Sm "$SUMS_PATH" -s "$MINISIGN_SECRET_KEY" \
+  -t "SHA256SUMS for $(basename "$DMG_PATH")"
+SIG_PATH="${SUMS_PATH}.minisig"
+CHECKSUM=$(awk '{print $1}' "$SUMS_PATH")
+echo "  ${SUMS_PATH} + ${SIG_PATH}"
 
 # ── 10. Commit the bump, then tag it ───────────────────────────────────────────
 # Committing before publishing means the tag points at the commit that declares the
@@ -334,7 +348,8 @@ git push -q origin "$RELEASE_BRANCH"
 step "Publishing GitHub release"
 gh release create "$TAG" \
   "$DMG_PATH" \
-  "$CHECKSUM_PATH" \
+  "$SUMS_PATH" \
+  "$SIG_PATH" \
   --title "${APP_NAME} ${VERSION}" \
   --notes "SHA-256: ${CHECKSUM}" \
   --generate-notes
@@ -342,3 +357,4 @@ gh release create "$TAG" \
 echo ""
 echo "✅ Released ${TAG}"
 echo "   DMG: ${DMG_PATH}"
+echo "   Checksums: ${SUMS_PATH} (signed)"
